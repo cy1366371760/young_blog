@@ -25,7 +25,7 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 5.1.1
-          dune-cache: true
+          cache: true
 
       - name: Install OCaml dependencies
         run: opam install . --deps-only -y
@@ -34,16 +34,18 @@ jobs:
         run: opam exec -- scripts/build_site.sh
 
       - name: Publish deploy branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           publish_dir="$(mktemp -d)"
-          cp -R _build/default/public/. "$publish_dir/"
+          cp -R dist/. "$publish_dir/"
 
-          git fetch origin deploy || true
-          git switch --orphan deploy
-          git rm -rf . >/dev/null 2>&1 || true
-          cp -R "$publish_dir"/. .
+          cd "$publish_dir"
+          git init
+          git checkout -b deploy
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

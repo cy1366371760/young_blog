@@ -1,0 +1,57 @@
+name: Publish blog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libffi-dev libssl-dev pkg-config zlib1g-dev
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.1.1
+          dune-cache: true
+
+      - name: Install OCaml dependencies
+        run: opam install . --deps-only -y
+
+      - name: Build static site
+        run: opam exec -- scripts/build_site.sh
+
+      - name: Publish deploy branch
+        run: |
+          set -euo pipefail
+
+          publish_dir="$(mktemp -d)"
+          cp -R _build/default/public/. "$publish_dir/"
+
+          git fetch origin deploy || true
+          git switch --orphan deploy
+          git rm -rf . >/dev/null 2>&1 || true
+          cp -R "$publish_dir"/. .
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No deploy changes."
+          else
+            git commit -m "Deploy blog"
+            git push --force origin deploy
+          fi

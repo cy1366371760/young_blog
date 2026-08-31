@@ -1,0 +1,5 @@
+(rule
+ (target app.js)
+ (deps ../src/app/main.bc.js)
+ (action
+  (copy %{deps} %{target})))

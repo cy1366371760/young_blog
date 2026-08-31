@@ -1,0 +1,14 @@
+opam-version: "2.0"
+synopsis: "A bilingual personal blog built with OCaml and Bonsai"
+maintainer: "cyoung"
+authors: "cyoung"
+license: "LicenseRef-Proprietary"
+depends: [
+  "ocaml" {>= "5.1.0"}
+  "dune" {>= "3.11"}
+  "bonsai" {>= "v0.17" & < "v0.18"}
+  "ppx_jane" {>= "v0.17" & < "v0.18"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]

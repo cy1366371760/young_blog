@@ -3,6 +3,7 @@ open! Bonsai_web.Cont
 open! Bonsai.Let_syntax
 
 let app graph =
+  let posts = Post.load () in
   let active_section, set_active_section =
     Bonsai.state
       Section.Tech_en
@@ -12,7 +13,7 @@ let app graph =
   in
   let%arr active_section = active_section
   and set_active_section = set_active_section in
-  Blog_view.page ~active_section ~set_active_section ~posts:Post.sample
+  Blog_view.page ~active_section ~set_active_section ~posts
 ;;
 
 let () = Bonsai_web.Start.start app

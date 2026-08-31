@@ -3,10 +3,24 @@ name: Publish blog
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/publish.yml"
+      - ".ocamlformat"
+      - "dune"
+      - "dune-project"
+      - "ocaml_blog.opam"
+      - "public/**"
+      - "scripts/build_site.sh"
+      - "scripts/generate_posts.mjs"
+      - "src/**"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: blog-deploy
+  cancel-in-progress: false
 
 jobs:
   build:

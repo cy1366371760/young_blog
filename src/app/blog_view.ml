@@ -20,13 +20,18 @@ let tag_chip tag = Node.span ~attrs:[ Attr.class_ "tag-chip" ] [ text tag ]
 
 let post_card (post : Post.t) =
   let href = Section.path_prefix post.section ^ "/" ^ post.slug in
+  let hierarchy = String.concat [ post.category; post.subcategory ] ~sep:" / " in
   Node.create
     "article"
     ~attrs:[ Attr.class_ "post-card" ]
     [ Node.a ~attrs:[ Attr.href href; Attr.class_ "post-title" ] [ text post.title ]
     ; Node.div
         ~attrs:[ Attr.class_ "post-meta" ]
-        [ text (Date.to_string post.date ^ " · " ^ Section.short_label post.section) ]
+        [ text
+            (String.concat
+               [ Date.to_string post.date; Section.short_label post.section; hierarchy ]
+               ~sep:" · ")
+        ]
     ; Node.p ~attrs:[ Attr.class_ "post-summary" ] [ text post.summary ]
     ; Node.div ~attrs:[ Attr.class_ "post-tags" ] (List.map post.tags ~f:tag_chip)
     ]

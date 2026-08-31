@@ -3,7 +3,7 @@ open! Core
 type t =
   | Tech_en
   | Zh_notes
-[@@deriving equal, sexp_of]
+[@@deriving equal, sexp]
 
 let all = [ Tech_en; Zh_notes ]
 

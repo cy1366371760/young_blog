@@ -4,9 +4,15 @@ This project keeps publishing simple:
 
 1. Write Markdown under `content/`.
 2. Commit to `main`.
-3. GitHub Actions builds the OCaml/Bonsai site.
-4. The workflow pushes static output to the `deploy` branch.
-5. Cloudflare Pages publishes the `deploy` branch.
+3. GitHub Actions updates the `deploy` branch.
+4. Cloudflare Pages publishes the `deploy` branch.
+
+There are two publish paths:
+
+- `Publish content` runs for content-only changes. It regenerates `posts.js` and
+  does not install OCaml dependencies.
+- `Publish blog` runs when application code changes. It rebuilds the
+  OCaml/Bonsai bundle and publishes the full static site.
 
 ## Content hierarchy
 
@@ -29,3 +35,6 @@ content/zh/notes/daily/2026-09-01-first-travel-note.md
 
 Send Codex the section, category, subcategory, title, tags, and body. Codex can
 create the Markdown file and commit it through the GitHub plugin.
+
+For content-only edits, this should be a fast deploy path: no opam switch, no
+Dune rebuild, and no js_of_ocaml compilation.

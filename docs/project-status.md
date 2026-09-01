@@ -16,7 +16,7 @@ https://github.com/cy1366371760/young_blog
 
 Cloudflare Pages should deploy from the `deploy` branch. The `deploy` branch is
 static-only and should contain only browser assets such as `index.html`,
-`styles.css`, `posts.js`, and `app.js`.
+`styles.css`, `posts.js`, `articles/`, `_redirects`, and `app.js`.
 
 ## Recent PRs
 
@@ -24,6 +24,10 @@ static-only and should contain only browser assets such as `index.html`,
   - Branch: `pr/fast-content-publish`
   - Status: merged.
   - Purpose: separate content publishing from full OCaml/Bonsai rebuilds.
+- `#2 Add project context documents`
+  - Branch: `pr/fast-content-publish`
+  - Status: merged.
+  - Purpose: add lightweight project memory for future maintainers and AI agents.
 
 ## Implemented
 
@@ -35,13 +39,15 @@ static-only and should contain only browser assets such as `index.html`,
 - GitHub Actions publishing to `deploy`.
 - Fast content publishing design.
 - Markdown frontmatter to generated post index.
+- Generated article HTML assets.
+- URL-driven article detail pages.
+- Bonsai article loading state machine for article body fetches.
+- Cloudflare Pages SPA fallback file.
 
 ## Next Steps
 
-1. Add article body output:
-   - generate per-article static pages, or
-   - generate Markdown/HTML assets loaded on demand.
-2. Add Bonsai state for query, tags, category, subcategory, and selected post.
+1. Configure Cloudflare Pages to serve the `deploy` branch and honor `_redirects`.
+2. Add Bonsai state for query, tags, category, and subcategory filters.
 3. Replace the illustrative Incremental trace panel with real state-driven
    highlights.
 4. Add a small smoke test script for generated assets.
@@ -53,8 +59,9 @@ static-only and should contain only browser assets such as `index.html`,
 - `scripts/generate_posts.mjs` supports a small JSON-style subset of TOML
   frontmatter. If richer frontmatter is needed, add a parser deliberately rather
   than expanding ad hoc parsing too far.
-- The current UI links to article URLs, but article body pages are not generated
-  yet.
+- The Markdown renderer intentionally supports only a small safe subset.
+- Clean article URLs need Cloudflare Pages fallback behavior from `_redirects` in
+  production. Basic static servers may return 404 for direct deep links.
 
 ## Operational Notes
 

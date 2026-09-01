@@ -1,6 +1,11 @@
 (executable
  (name main)
  (modes js)
- (libraries bonsai.web js_of_ocaml)
+ (libraries
+  async_kernel
+  bonsai.web
+  bonsai.web_ui_nav_link
+  bonsai.web_ui_url_var
+  js_of_ocaml)
  (preprocess
   (pps ppx_jane bonsai.ppx_bonsai)))

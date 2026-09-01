@@ -2,7 +2,8 @@ open! Core
 open Bonsai_web.Cont
 
 val page
-  :  active_section:Section.t
-  -> set_active_section:(Section.t -> unit Effect.t)
+  :  route:Route.t
+  -> set_route:(Route.t -> unit Effect.t)
   -> posts:Post.t list
+  -> article:Article_loader.t
   -> Vdom.Node.t

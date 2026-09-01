@@ -17,9 +17,19 @@ let short_label = function
   | Zh_notes -> "中文"
 ;;
 
+let path_segment = function
+  | Tech_en -> "tech"
+  | Zh_notes -> "zh"
+;;
+
+let of_path_segment = function
+  | "tech" -> Some Tech_en
+  | "zh" -> Some Zh_notes
+  | _ -> None
+;;
+
 let path_prefix = function
-  | Tech_en -> "/tech"
-  | Zh_notes -> "/zh"
+  | section -> "/" ^ path_segment section
 ;;
 
 let description = function

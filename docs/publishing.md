@@ -10,7 +10,7 @@ This project keeps publishing simple:
 There are two publish paths:
 
 - `Publish content` runs for content-only changes. It regenerates `posts.js` and
-  does not install OCaml dependencies.
+  `articles/` without installing OCaml dependencies.
 - `Publish blog` runs when application code changes. It rebuilds the
   OCaml/Bonsai bundle and publishes the full static site.
 
@@ -38,3 +38,20 @@ create the Markdown file and commit it through the GitHub plugin.
 
 For content-only edits, this should be a fast deploy path: no opam switch, no
 Dune rebuild, and no js_of_ocaml compilation.
+
+## Article URLs
+
+Generated article URLs follow the content hierarchy:
+
+```text
+/<section>/<category>/<subcategory>/<slug>
+```
+
+The generated article body lives under:
+
+```text
+/articles/<section>/<category>/<subcategory>/<slug>.html
+```
+
+Cloudflare Pages should publish the `deploy` branch and honor `_redirects` so
+direct article URLs fall back to `index.html` and are handled by the Bonsai app.

@@ -24,7 +24,8 @@ body {
 }
 
 button,
-input {
+input,
+a {
   font: inherit;
 }
 
@@ -57,6 +58,8 @@ input {
 }
 
 .section-tab {
+  display: inline-flex;
+  align-items: center;
   min-height: 34px;
   padding: 7px 10px;
   border: 0;
@@ -66,6 +69,7 @@ input {
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -174,6 +178,111 @@ input {
 
 .post-summary {
   margin: 10px 0 12px;
+}
+
+.article-page {
+  min-width: 0;
+}
+
+.article-header {
+  margin-bottom: 18px;
+}
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 18px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.article-lede {
+  max-width: 66ch;
+}
+
+.article-state {
+  max-width: 66ch;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.article-state.is-error {
+  color: #a43f3f;
+}
+
+.article-body {
+  max-width: 72ch;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.78;
+}
+
+.article-body p,
+.article-body ul,
+.article-body blockquote,
+.article-body pre {
+  margin: 0 0 18px;
+}
+
+.article-body h1,
+.article-body h2,
+.article-body h3 {
+  margin: 28px 0 12px;
+  font-family: Georgia, "Songti SC", "Noto Serif CJK SC", serif;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.article-body h1 {
+  font-size: 30px;
+}
+
+.article-body h2 {
+  font-size: 24px;
+}
+
+.article-body h3 {
+  font-size: 19px;
+}
+
+.article-body a {
+  color: var(--accent);
+}
+
+.article-body code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--surface-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.article-body pre {
+  overflow-x: auto;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.article-body pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.article-body blockquote {
+  padding-left: 14px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
 }
 
 .side-panel {

@@ -5,6 +5,8 @@ import path from "node:path";
 
 const contentRoot = "content";
 const outputPath = process.argv[2] ?? "public/posts.js";
+const outputRoot = path.dirname(outputPath);
+const articlesRoot = path.join(outputRoot, "articles");
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -83,6 +85,12 @@ function summaryFromBody(body) {
     ?? "";
 }
 
+function assertPathSegment(value, field, filePath) {
+  if (!/^[A-Za-z0-9._-]+$/.test(value)) {
+    throw new Error(`${filePath}: ${field} must be a URL-safe path segment`);
+  }
+}
+
 function sectionConstructor(section) {
   switch (section) {
     case "tech":
@@ -92,6 +100,132 @@ function sectionConstructor(section) {
     default:
       throw new Error(`unknown section: ${section}`);
   }
+}
+
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/`/g, "&#96;");
+}
+
+function renderInline(source) {
+  const token = /(`([^`]+)`)|\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]+)\)/g;
+  let html = "";
+  let lastIndex = 0;
+  let match;
+
+  while ((match = token.exec(source)) !== null) {
+    html += escapeHtml(source.slice(lastIndex, match.index));
+
+    if (match[2] !== undefined) {
+      html += `<code>${escapeHtml(match[2])}</code>`;
+    } else {
+      html += `<a href="${escapeAttribute(match[4])}">${escapeHtml(match[3])}</a>`;
+    }
+
+    lastIndex = token.lastIndex;
+  }
+
+  html += escapeHtml(source.slice(lastIndex));
+  return html;
+}
+
+function renderMarkdown(source) {
+  const lines = source.split("\n");
+  const html = [];
+  let paragraph = [];
+  let inList = false;
+  let inCode = false;
+  let codeLanguage = "";
+  let codeLines = [];
+
+  function flushParagraph() {
+    if (paragraph.length === 0) return;
+    html.push(`<p>${renderInline(paragraph.join(" "))}</p>`);
+    paragraph = [];
+  }
+
+  function closeList() {
+    if (!inList) return;
+    html.push("</ul>");
+    inList = false;
+  }
+
+  function closeCode() {
+    const languageClass = codeLanguage === "" ? "" : ` class="language-${escapeAttribute(codeLanguage)}"`;
+    html.push(`<pre><code${languageClass}>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+    codeLanguage = "";
+    codeLines = [];
+    inCode = false;
+  }
+
+  for (const line of lines) {
+    const fence = line.match(/^```([A-Za-z0-9_-]*)\s*$/);
+    if (fence) {
+      if (inCode) {
+        closeCode();
+      } else {
+        flushParagraph();
+        closeList();
+        inCode = true;
+        codeLanguage = fence[1] ?? "";
+      }
+      continue;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      continue;
+    }
+
+    if (line.trim() === "") {
+      flushParagraph();
+      closeList();
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      closeList();
+      html.push(`<h${heading[1].length}>${renderInline(heading[2].trim())}</h${heading[1].length}>`);
+      continue;
+    }
+
+    const quote = line.match(/^>\s?(.+)$/);
+    if (quote) {
+      flushParagraph();
+      closeList();
+      html.push(`<blockquote>${renderInline(quote[1].trim())}</blockquote>`);
+      continue;
+    }
+
+    const item = line.match(/^[-*]\s+(.+)$/);
+    if (item) {
+      flushParagraph();
+      if (!inList) {
+        html.push("<ul>");
+        inList = true;
+      }
+      html.push(`<li>${renderInline(item[1].trim())}</li>`);
+      continue;
+    }
+
+    paragraph.push(line.trim());
+  }
+
+  if (inCode) closeCode();
+  flushParagraph();
+  closeList();
+
+  return html.join("\n");
 }
 
 function sexpAtom(value) {
@@ -137,13 +271,23 @@ function postFromFile(filePath) {
   return {
     title: fields.title,
     section: sectionConstructor(section),
+    sectionPath: section,
     category,
     subcategory,
     date,
     tags,
     summary: fields.summary ?? summaryFromBody(body),
     slug: fields.slug ?? slugFromFilename(filePath),
+    body,
+    filePath,
   };
+}
+
+function validatePostPath(post) {
+  assertPathSegment(post.sectionPath, "section", post.filePath);
+  assertPathSegment(post.category, "category", post.filePath);
+  assertPathSegment(post.subcategory, "subcategory", post.filePath);
+  assertPathSegment(post.slug, "slug", post.filePath);
 }
 
 function postToSexp(post) {
@@ -161,6 +305,22 @@ function postToSexp(post) {
   ].join(" ");
 }
 
+function writeArticle(post) {
+  validatePostPath(post);
+
+  const html = renderMarkdown(post.body);
+  const outputFile = path.join(
+    articlesRoot,
+    post.sectionPath,
+    post.category,
+    post.subcategory,
+    `${post.slug}.html`,
+  );
+
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.writeFileSync(outputFile, `${html}\n`);
+}
+
 const posts = walk(contentRoot)
   .map(postFromFile)
   .sort((left, right) => right.date.localeCompare(left.date) || left.title.localeCompare(right.title));
@@ -169,5 +329,7 @@ const sexp = `(${posts.map(postToSexp).join("\n ")})`;
 const output = `globalThis.BLOG_POSTS_SEXP = ${JSON.stringify(sexp)};\n`;
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+fs.rmSync(articlesRoot, { recursive: true, force: true });
 fs.writeFileSync(outputPath, output);
-console.log(`Generated ${posts.length} posts in ${outputPath}`);
+posts.forEach(writeArticle);
+console.log(`Generated ${posts.length} posts in ${outputPath} and ${articlesRoot}`);

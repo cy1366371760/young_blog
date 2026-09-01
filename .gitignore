@@ -1,6 +1,7 @@
 _build/
 _opam/
 dist/
+public/articles/
 public/posts.js
 
 *.install

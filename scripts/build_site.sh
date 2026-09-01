@@ -2,7 +2,7 @@
 set -euo pipefail
 
 node scripts/generate_posts.mjs public/posts.js
-dune build @site
+dune build --profile release @site
 
 rm -rf dist
 mkdir -p dist

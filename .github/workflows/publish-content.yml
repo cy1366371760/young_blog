@@ -35,13 +35,15 @@ jobs:
           git fetch origin deploy --depth=1
           git worktree add --detach "$publish_dir" origin/deploy
           cp public/posts.js "$publish_dir/posts.js"
+          rm -rf "$publish_dir/articles"
+          cp -R public/articles "$publish_dir/articles"
 
           cd "$publish_dir"
           git checkout -B deploy
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add posts.js
+          git add posts.js articles
 
           if git diff --cached --quiet; then
             echo "No content changes."

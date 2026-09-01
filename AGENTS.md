@@ -35,6 +35,7 @@ and a static publishing pipeline.
   - `_build/`
   - `_opam/`
   - `dist/`
+  - `public/articles/`
   - `public/posts.js`
 
 ## Useful Commands
@@ -56,8 +57,8 @@ python3 -m http.server 8891 --directory dist
 - `main` contains source code and Markdown content.
 - `deploy` contains static output for Cloudflare Pages.
 - `Publish blog` rebuilds the OCaml/Bonsai app for application changes.
-- `Publish content` updates `posts.js` for content-only changes without
-  installing OCaml dependencies.
+- `Publish content` updates `posts.js` and `articles/` for content-only changes
+  without installing OCaml dependencies.
 
 Cloudflare Pages should point at the `deploy` branch with:
 
@@ -70,14 +71,17 @@ Cloudflare Pages should point at the `deploy` branch with:
 
 - `src/app/` contains the Bonsai frontend.
 - `scripts/generate_posts.mjs` reads Markdown frontmatter and generates
-  `posts.js`.
+  `posts.js` plus per-article HTML files in `public/articles/`.
 - `public/index.html` loads `posts.js` before `app.js`.
 - `Post.load` reads `globalThis.BLOG_POSTS_SEXP`, parses it with sexp support,
   and falls back to sample data if the generated data is unavailable.
+- `Route` owns clean blog URLs and parses them into typed OCaml route values.
+- `Article_loader` fetches generated article HTML when the route selects an
+  article. It uses a Bonsai state machine so stale responses do not overwrite
+  newer navigation.
 
 ## Known Gaps
 
-- Article body pages are not implemented yet.
 - Search and tag filters are UI placeholders.
 - The Incremental trace panel is still illustrative, not wired to real
   computation events.
@@ -89,6 +93,7 @@ Cloudflare Pages should point at the `deploy` branch with:
 - Run `opam exec -- dune build @fmt`.
 - Run `opam exec -- scripts/build_site.sh` for application changes.
 - For content-only changes, run `node scripts/generate_posts.mjs public/posts.js`.
+- Smoke test generated article assets when Markdown rendering changes.
 - Update `CHANGELOG.md` and `docs/project-status.md` when the project state
   changes.
 - Add an ADR under `docs/adr/` when a durable architectural decision is made.

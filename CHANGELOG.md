@@ -7,7 +7,13 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Added
 
-- Added project context documents for future maintainers and AI agents.
+- Added article detail routing and on-demand article body loading.
+- Added generated per-article HTML assets under `articles/`.
+- Added Cloudflare Pages SPA fallback support through `public/_redirects`.
+
+### Changed
+
+- Updated fast content publishing to deploy both `posts.js` and `articles/`.
 
 ## 2026-09-01
 
@@ -22,6 +28,7 @@ This project follows a lightweight version of Keep a Changelog. Dates use
   without baking content into the OCaml bundle.
 - Added a fast content publishing workflow for Markdown-only updates.
 - Added category and subcategory metadata to post cards.
+- Added project context documents for future maintainers and AI agents.
 
 ### Changed
 

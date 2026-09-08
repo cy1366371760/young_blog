@@ -8,6 +8,7 @@ slug="${4:-}"
 
 if [[ -z "$section" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
   echo "usage: scripts/new_post.sh <tech|zh> <category> <subcategory> <slug>" >&2
+  echo "example: scripts/new_post.sh tech ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
   exit 2
 fi
 

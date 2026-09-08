@@ -1,12 +1,16 @@
 # Project Status
 
-Last updated: 2026-09-01.
+Last updated: 2026-09-08.
 
 ## Current State
 
 The project has an OCaml/Bonsai single-page blog shell with two top-level
 sections. The UI uses the selected bilingual journal style and reserves a future
 comments boundary.
+
+The English technical section now has an `ocaml-learning` category with an
+`ocaml-in-atcoder` subcategory for AtCoder examples, OCaml solutions, and
+problem-solving reflections.
 
 The repository is connected to GitHub at:
 
@@ -43,6 +47,8 @@ static-only and should contain only browser assets such as `index.html`,
 - URL-driven article detail pages.
 - Bonsai article loading state machine for article body fetches.
 - Cloudflare Pages SPA fallback file.
+- OCaml in AtCoder content framework, starter note, and five beginner-problem
+  write-ups with OCaml implementations.
 
 ## Next Steps
 

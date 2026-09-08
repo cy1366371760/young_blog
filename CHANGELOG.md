@@ -10,10 +10,16 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 - Added article detail routing and on-demand article body loading.
 - Added generated per-article HTML assets under `articles/`.
 - Added Cloudflare Pages SPA fallback support through `public/_redirects`.
+- Added the `tech/ocaml-learning/ocaml-in-atcoder` content framework for
+  AtCoder notes and OCaml implementations.
+- Added an AtCoder note template and starter page.
+- Added five published AtCoder beginner-problem notes with OCaml solutions and
+  reviewed learning reflections.
 
 ### Changed
 
 - Updated fast content publishing to deploy both `posts.js` and `articles/`.
+- Humanized known category and subcategory labels on article cards.
 
 ## 2026-09-01
 

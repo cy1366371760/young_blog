@@ -18,8 +18,23 @@ let section_button ~active_section ~set_route section =
 
 let tag_chip tag = Node.span ~attrs:[ Attr.class_ "tag-chip" ] [ text tag ]
 
+let path_segment_label = function
+  | "ocaml" -> "OCaml"
+  | "ocaml-learning" -> "OCaml Learning"
+  | "ocaml-in-atcoder" -> "OCaml in AtCoder"
+  | "bonsai" -> "Bonsai"
+  | "incremental" -> "Incremental"
+  | "notes" -> "Notes"
+  | "daily" -> "Daily"
+  | segment -> String.substr_replace_all segment ~pattern:"-" ~with_:" "
+;;
+
 let post_card ~set_route (post : Post.t) =
-  let hierarchy = String.concat [ post.category; post.subcategory ] ~sep:" / " in
+  let hierarchy =
+    String.concat
+      [ path_segment_label post.category; path_segment_label post.subcategory ]
+      ~sep:" / "
+  in
   Node.create
     "article"
     ~attrs:[ Attr.class_ "post-card" ]

@@ -8,13 +8,30 @@ type article =
   }
 [@@deriving equal, sexp]
 
+type category =
+  { section : Section.t
+  ; category : string
+  }
+[@@deriving equal, sexp]
+
+type subcategory =
+  { section : Section.t
+  ; category : string
+  ; subcategory : string
+  }
+[@@deriving equal, sexp]
+
 type t =
   | Index of Section.t
+  | Category of category
+  | Subcategory of subcategory
   | Article of article
 [@@deriving equal, sexp]
 
 let section = function
   | Index section -> section
+  | Category category -> category.section
+  | Subcategory subcategory -> subcategory.section
   | Article article -> article.section
 ;;
 
@@ -29,6 +46,9 @@ let of_post (post : Post.t) =
 
 let path_segments = function
   | Index section -> [ Section.path_segment section ]
+  | Category { section; category } -> [ Section.path_segment section; category ]
+  | Subcategory { section; category; subcategory } ->
+    [ Section.path_segment section; category; subcategory ]
   | Article { section; category; subcategory; slug } ->
     [ Section.path_segment section; category; subcategory; slug ]
 ;;
@@ -43,10 +63,11 @@ let article_asset_path { section; category; subcategory; slug } =
 
 let article_asset_path_for_route = function
   | Index _ -> None
+  | Category _ | Subcategory _ -> None
   | Article article -> Some (article_asset_path article)
 ;;
 
-let post_matches_article (post : Post.t) article =
+let post_matches_article (post : Post.t) (article : article) =
   Section.equal post.section article.section
   && String.equal post.category article.category
   && String.equal post.subcategory article.subcategory
@@ -61,6 +82,14 @@ let parse_exn components =
   | [ section ] ->
     (match Section.of_path_segment section with
      | Some section -> Index section
+     | None -> raise_s [%message "Unknown section" (section : string)])
+  | [ section; category ] ->
+    (match Section.of_path_segment section with
+     | Some section -> Category { section; category }
+     | None -> raise_s [%message "Unknown section" (section : string)])
+  | [ section; category; subcategory ] ->
+    (match Section.of_path_segment section with
+     | Some section -> Subcategory { section; category; subcategory }
      | None -> raise_s [%message "Unknown section" (section : string)])
   | [ section; category; subcategory; slug ] ->
     (match Section.of_path_segment section with

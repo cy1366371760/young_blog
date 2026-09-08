@@ -20,6 +20,8 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 - Updated fast content publishing to deploy both `posts.js` and `articles/`.
 - Humanized known category and subcategory labels on article cards.
+- Replaced the flat section index with navigable category and subcategory pages.
+- Refined the navigation and article-reading typography.
 
 ## 2026-09-01
 

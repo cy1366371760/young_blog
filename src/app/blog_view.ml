@@ -29,12 +29,60 @@ let path_segment_label = function
   | segment -> String.substr_replace_all segment ~pattern:"-" ~with_:" "
 ;;
 
-let post_card ~set_route (post : Post.t) =
-  let hierarchy =
-    String.concat
-      [ path_segment_label post.category; path_segment_label post.subcategory ]
-      ~sep:" / "
+let unique_sorted values = List.dedup_and_sort values ~compare:String.compare
+
+let posts_in_category posts category =
+  List.filter posts ~f:(fun (post : Post.t) -> String.equal post.category category)
+;;
+
+let posts_in_subcategory posts category subcategory =
+  List.filter posts ~f:(fun (post : Post.t) ->
+    String.equal post.category category && String.equal post.subcategory subcategory)
+;;
+
+let category_card ~set_route ~section ~posts category =
+  let category_posts = posts_in_category posts category in
+  let note_count = List.length category_posts in
+  let subcategory_count =
+    List.map category_posts ~f:(fun (post : Post.t) -> post.subcategory)
+    |> unique_sorted
+    |> List.length
   in
+  Node.create
+    "article"
+    ~attrs:[ Attr.class_ "browse-card" ]
+    [ Bonsai_web_ui_nav_link.make
+        ~attrs:[ Attr.class_ "browse-card-title" ]
+        ~set_url:set_route
+        ~page_to_string:Route.to_path
+        (Route.Category { section; category })
+        (path_segment_label category)
+    ; Node.div
+        ~attrs:[ Attr.class_ "browse-card-meta" ]
+        [ text
+            [%string "%{subcategory_count#Int} subcategories · %{note_count#Int} notes"]
+        ]
+    ]
+;;
+
+let subcategory_card ~set_route ~section ~category ~posts subcategory =
+  let note_count = List.length (posts_in_subcategory posts category subcategory) in
+  Node.create
+    "article"
+    ~attrs:[ Attr.class_ "browse-card" ]
+    [ Bonsai_web_ui_nav_link.make
+        ~attrs:[ Attr.class_ "browse-card-title" ]
+        ~set_url:set_route
+        ~page_to_string:Route.to_path
+        (Route.Subcategory { section; category; subcategory })
+        (path_segment_label subcategory)
+    ; Node.div
+        ~attrs:[ Attr.class_ "browse-card-meta" ]
+        [ text [%string "%{note_count#Int} notes"] ]
+    ]
+;;
+
+let post_card ~set_route (post : Post.t) =
   Node.create
     "article"
     ~attrs:[ Attr.class_ "post-card" ]
@@ -48,7 +96,7 @@ let post_card ~set_route (post : Post.t) =
         ~attrs:[ Attr.class_ "post-meta" ]
         [ text
             (String.concat
-               [ Date.to_string post.date; Section.short_label post.section; hierarchy ]
+               [ Date.to_string post.date; Section.short_label post.section ]
                ~sep:" · ")
         ]
     ; Node.p ~attrs:[ Attr.class_ "post-summary" ] [ text post.summary ]
@@ -66,6 +114,8 @@ let incremental_panel ~route ~article =
   let route_status =
     match route with
     | Route.Index _ -> "index"
+    | Route.Category _ -> "category"
+    | Route.Subcategory _ -> "subcategory"
     | Route.Article _ -> "article"
   in
   let load_status =
@@ -109,8 +159,12 @@ let article_header ~set_route (article : Route.article) (post : Post.t option) =
         ~attrs:[ Attr.class_ "back-link" ]
         ~set_url:set_route
         ~page_to_string:Route.to_path
-        (Route.Index article.section)
-        ("Back to " ^ Section.short_label article.section)
+        (Route.Subcategory
+           { section = article.section
+           ; category = article.category
+           ; subcategory = article.subcategory
+           })
+        ("Back to " ^ path_segment_label article.subcategory)
     ; Node.h1 [ text title ]
     ; (if String.is_empty summary
        then Node.none
@@ -134,14 +188,76 @@ let article_body article =
       ()
 ;;
 
+let back_link ~set_route route label =
+  Bonsai_web_ui_nav_link.make
+    ~attrs:[ Attr.class_ "back-link" ]
+    ~set_url:set_route
+    ~page_to_string:Route.to_path
+    route
+    label
+;;
+
+let section_header section =
+  Node.div
+    ~attrs:[ Attr.class_ "section-header" ]
+    [ Node.div ~attrs:[ Attr.class_ "section-kicker" ] [ text "Library" ]
+    ; Node.h1 [ text (Section.label section) ]
+    ; Node.p [ text (Section.description section) ]
+    ]
+;;
+
+let category_page ~set_route ~section ~posts category =
+  let subcategories =
+    posts_in_category posts category
+    |> List.map ~f:(fun (post : Post.t) -> post.subcategory)
+    |> unique_sorted
+  in
+  Node.section
+    ~attrs:[ Attr.class_ "main-copy" ]
+    [ back_link ~set_route (Route.Index section) ("Back to " ^ Section.label section)
+    ; Node.div
+        ~attrs:[ Attr.class_ "section-header" ]
+        [ Node.div ~attrs:[ Attr.class_ "section-kicker" ] [ text "Category" ]
+        ; Node.h1 [ text (path_segment_label category) ]
+        ; Node.p [ text "Choose a topic to see its notes." ]
+        ]
+    ; Node.div
+        ~attrs:[ Attr.class_ "browse-list" ]
+        (List.map
+           subcategories
+           ~f:(subcategory_card ~set_route ~section ~category ~posts))
+    ]
+;;
+
+let subcategory_page ~set_route ~section ~posts ~category ~subcategory =
+  let notes = posts_in_subcategory posts category subcategory in
+  Node.section
+    ~attrs:[ Attr.class_ "main-copy" ]
+    [ back_link
+        ~set_route
+        (Route.Category { section; category })
+        ("Back to " ^ path_segment_label category)
+    ; Node.div
+        ~attrs:[ Attr.class_ "section-header" ]
+        [ Node.div
+            ~attrs:[ Attr.class_ "section-kicker" ]
+            [ text (path_segment_label category) ]
+        ; Node.h1 [ text (path_segment_label subcategory) ]
+        ; Node.p [ text "Problem notes, implementations, and reflections." ]
+        ]
+    ; Node.div
+        ~attrs:[ Attr.class_ "article-list" ]
+        (List.map notes ~f:(post_card ~set_route))
+    ]
+;;
+
 let page ~route ~set_route ~posts ~article =
   let active_section = Route.section route in
   Node.div
     ~attrs:[ Attr.class_ "app-shell" ]
     [ Node.header
         ~attrs:[ Attr.class_ "topbar" ]
-        [ Node.div ~attrs:[ Attr.class_ "brand" ] [ text "春树与类型" ]
-        ; Node.create
+        [ Node.create
             "nav"
             ~attrs:[ Attr.class_ "section-tabs" ]
             (List.map Section.all ~f:(section_button ~active_section ~set_route))
@@ -149,24 +265,23 @@ let page ~route ~set_route ~posts ~article =
     ; Node.main
         ~attrs:[ Attr.class_ "page-grid" ]
         [ (match route with
-           | Route.Index _ ->
+           | Route.Index section ->
+             let categories =
+               posts
+               |> List.map ~f:(fun (post : Post.t) -> post.category)
+               |> unique_sorted
+             in
              Node.section
                ~attrs:[ Attr.class_ "main-copy" ]
-               [ Node.h1 [ text "把日常的细光，放进可维护的结构里。" ]
-               ; Node.p [ text (Section.description active_section) ]
+               [ section_header section
                ; Node.div
-                   ~attrs:[ Attr.class_ "tools-row" ]
-                   [ Node.div
-                       ~attrs:[ Attr.class_ "searchbox" ]
-                       [ text "Search and tag filters land in the next step." ]
-                   ; Node.div
-                       ~attrs:[ Attr.class_ "tags" ]
-                       [ tag_chip "OCaml"; tag_chip "Bonsai"; tag_chip "随记" ]
-                   ]
-               ; Node.div
-                   ~attrs:[ Attr.class_ "article-list" ]
-                   (List.map posts ~f:(post_card ~set_route))
+                   ~attrs:[ Attr.class_ "browse-list" ]
+                   (List.map categories ~f:(category_card ~set_route ~section ~posts))
                ]
+           | Route.Category { section; category } ->
+             category_page ~set_route ~section ~posts category
+           | Route.Subcategory { section; category; subcategory } ->
+             subcategory_page ~set_route ~section ~posts ~category ~subcategory
            | Route.Article article_route ->
              let post =
                List.find posts ~f:(fun post ->

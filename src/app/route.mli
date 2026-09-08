@@ -8,8 +8,23 @@ type article =
   }
 [@@deriving equal, sexp]
 
+type category =
+  { section : Section.t
+  ; category : string
+  }
+[@@deriving equal, sexp]
+
+type subcategory =
+  { section : Section.t
+  ; category : string
+  ; subcategory : string
+  }
+[@@deriving equal, sexp]
+
 type t =
   | Index of Section.t
+  | Category of category
+  | Subcategory of subcategory
   | Article of article
 [@@deriving equal, sexp]
 

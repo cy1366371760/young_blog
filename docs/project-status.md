@@ -48,7 +48,7 @@ static-only and should contain only browser assets such as `index.html`,
 - URL-driven category and subcategory index pages.
 - Bonsai article loading state machine for article body fetches.
 - Cloudflare Pages SPA fallback file.
-- OCaml in AtCoder content framework, starter note, and five beginner-problem
+- OCaml in AtCoder content framework, starter note, and six beginner-problem
   write-ups with OCaml implementations.
 
 ## Next Steps

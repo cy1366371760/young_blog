@@ -15,6 +15,7 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 - Added an AtCoder note template and starter page.
 - Added five published AtCoder beginner-problem notes with OCaml solutions and
   reviewed learning reflections.
+- Added an OCaml write-up for AtCoder ABC085B, Kagami Mochi.
 
 ### Changed
 

@@ -45,6 +45,12 @@ either English or Chinese. Codex must create or update both maintained language
 sources, preserve code, validate the generated variants, open and merge a pull
 request, and verify deployment according to `docs/agent-content-workflow.md`.
 
+When a folder contains a review text file and related `.ml` files, Codex first
+turns the review into a concise, logically ordered article in the review's own
+language. It places referenced or materially relevant source listings beside
+the corresponding explanation, preserves the code exactly, and only then
+translates the finished article into the other maintained language.
+
 For content-only edits, this should be a fast deploy path: no opam switch, no
 Dune rebuild, and no js_of_ocaml compilation.
 

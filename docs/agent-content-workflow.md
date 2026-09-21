@@ -50,9 +50,61 @@ The generator enforces source pairing, shared metadata, unique locale variants,
 and unchanged code. Treat any validation failure as a content error; do not
 bypass the check.
 
+## Write From Review And Source Files
+
+Use this workflow when the target folder contains `review.txt`, a name such as
+`review-*.txt`, or another clearly designated review or draft text file.
+
+1. Inventory the folder before drafting. Read the review file completely, find
+   every path or source filename it mentions, and inspect the relevant `.ml`
+   files in the same folder. Resolve relative references from the review file's
+   directory. Do not invent content for a referenced file that is missing.
+2. Determine the review file's primary language from its prose. Write and
+   finish the article in that language first. A mixed-language filename, code
+   sample, or technical term does not change the primary language.
+3. Treat the review as source material, not publication-ready prose. Preserve
+   its facts, conclusions, and authorial point of view while:
+   - removing repetition and incidental scratch notes;
+   - correcting grammar and unclear transitions;
+   - ordering the argument so each section motivates the next;
+   - preferring short, direct explanations over inflated prose;
+   - adding only context that is supported by the review or inspected source.
+4. Build a natural article structure for the material. A technical review will
+   often flow through context, problem, key idea, implementation, review or
+   improvement, and lessons learned, but do not force empty sections.
+5. Include every meaningful `.ml` source file explicitly referenced by the
+   review. Also include an unmentioned `.ml` file when it materially explains
+   the article, such as a final implementation, an improved version, or a
+   contrasting attempt. Do not add unrelated files merely because they share
+   the folder.
+6. Place each source listing beside the prose that explains it, rather than
+   dumping all code at the end. Introduce the filename and its role, use an
+   `ocaml` fenced block, and keep the source byte-for-byte unchanged. Include
+   the complete file by default; if a file is generated or exceptionally large,
+   use the smallest coherent excerpt and state clearly that it is an excerpt.
+7. Do not translate, reformat, repair, or silently modernize source code or its
+   comments while embedding it. If the code appears wrong, explain the issue in
+   prose and preserve the source. Make code changes only when the user asks for
+   them, then apply the identical change to every article language version.
+8. Review the completed primary-language article on its own before translating:
+   verify the logic, remove avoidable verbosity, confirm code placement, and
+   check every factual statement against the review and source files.
+9. Translate that finished article into the other maintained language. Preserve
+   its structure and meaning, but rewrite sentences naturally for the target
+   language. Copy every fenced code block and inline code value exactly from the
+   primary-language article.
+10. Use the same `translation_key`, date, category, and subcategory in both
+    sources, then run the standard content validation and publishing lifecycle.
+
+Review files are inputs, not generated article assets. Do not move, rewrite,
+delete, or publish them unless the user explicitly asks. Include an untracked
+review file in the PR only when the user asks to preserve it in the repository.
+
 ## Add An Article
 
-1. Read nearby articles and templates to match their structure and tone.
+1. Read nearby articles and templates to match their structure and tone. If a
+   review-like text file is present, follow the source-file workflow above
+   before drafting.
 2. Create both source files. The helper creates a paired skeleton:
 
    ```sh

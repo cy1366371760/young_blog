@@ -48,6 +48,8 @@ static-only and should contain only browser assets such as `index.html`,
   Simplified Chinese source, preserving code spans and code blocks.
 - Repository-level AI runbook for translating, validating, opening and merging
   content PRs, and verifying deployment.
+- Source-material workflow for turning review text and related `.ml` files into
+  polished bilingual articles with naturally placed, unchanged code listings.
 - Build-time validation that every article has paired English and Simplified
   Chinese sources with shared routing metadata and unchanged code.
 - Static build script that emits `dist/`.

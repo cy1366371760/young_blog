@@ -22,6 +22,9 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Install content dependencies
+        run: npm ci
+
       - name: Generate post data
         run: node scripts/generate_posts.mjs public/posts.js
 

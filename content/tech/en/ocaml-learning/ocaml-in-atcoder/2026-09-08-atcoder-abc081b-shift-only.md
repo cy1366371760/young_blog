@@ -3,6 +3,7 @@ title = "AtCoder ABC081B: Shift only"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc081b-shift-only"
 tags = ["ocaml", "atcoder", "beginner", "recursion", "bit-operations"]
 summary = "Count each number's factors of two recursively and take the minimum to find the number of simultaneous divisions."
 draft = false

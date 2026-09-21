@@ -42,6 +42,7 @@ and a static publishing pipeline.
 ## Useful Commands
 
 ```sh
+npm ci
 opam exec -- dune build @fmt
 opam exec -- scripts/build_site.sh
 node scripts/generate_posts.mjs public/posts.js
@@ -73,6 +74,9 @@ Cloudflare Pages should point at the `deploy` branch with:
 - `src/app/` contains the Bonsai frontend.
 - `scripts/generate_posts.mjs` reads Markdown frontmatter and generates
   `posts.js` plus per-article HTML files in `public/articles/`.
+- Simplified Chinese is the only stored Chinese source. The generator uses
+  OpenCC to produce Traditional Chinese metadata and prose while preserving
+  fenced and inline code exactly.
 - `public/index.html` loads `posts.js` before `app.js`.
 - `Post.load` reads `globalThis.BLOG_POSTS_SEXP`, parses it with sexp support,
   and falls back to sample data if the generated data is unavailable.

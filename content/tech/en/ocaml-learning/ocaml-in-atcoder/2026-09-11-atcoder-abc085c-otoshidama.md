@@ -3,6 +3,7 @@ title = "AtCoder ABC085C: Otoshidama"
 date = "2026-09-11"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc085c-otoshidama"
 tags = ["ocaml", "atcoder", "beginner", "math", "sequence"]
 summary = "Enumerate the number of 10000-yen bills, then solve the remaining two-bill equation directly."
 draft = false

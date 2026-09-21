@@ -43,6 +43,9 @@ static-only and should contain only browser assets such as `index.html`,
   Traditional Chinese.
 - Localized navigation and UI copy, including an explicit message when an
   article translation has not been published yet.
+- English and Simplified Chinese versions of every current article.
+- Build-time generation of Traditional Chinese with OpenCC from a single
+  Simplified Chinese source, preserving code spans and code blocks.
 - Static build script that emits `dist/`.
 - GitHub Actions publishing to `deploy`.
 - Fast content publishing design.
@@ -58,8 +61,7 @@ static-only and should contain only browser assets such as `index.html`,
 ## Next Steps
 
 1. Configure Cloudflare Pages to serve the `deploy` branch and honor `_redirects`.
-2. Add translated Markdown variants for the existing English technical notes
-   and Simplified Chinese essay.
+2. Review the initial article translations for tone and terminology.
 3. Add Bonsai state for query, tags, category, and subcategory filters.
 4. Replace the illustrative Incremental trace panel with real state-driven
    highlights.

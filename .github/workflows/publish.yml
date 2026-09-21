@@ -44,6 +44,9 @@ jobs:
       - name: Install OCaml dependencies
         run: opam install . --deps-only -y
 
+      - name: Install content dependencies
+        run: npm ci
+
       - name: Build static site
         run: opam exec -- scripts/build_site.sh
 

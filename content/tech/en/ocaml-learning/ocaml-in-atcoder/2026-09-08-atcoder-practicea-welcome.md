@@ -3,6 +3,7 @@ title = "AtCoder PracticeA: Welcome to AtCoder"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-practicea-welcome"
 tags = ["ocaml", "atcoder", "beginner", "input-output"]
 summary = "A first OCaml submission: parse three integers and a string, then print their sum with the string."
 draft = false

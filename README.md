@@ -10,8 +10,10 @@ content/<tech|essays>/<en|zh-hans|zh-hant>/<category>/<subcategory>/<date>-<slug
 ```
 
 The corresponding public URLs begin with the same content type and locale, for
-example `/tech/en/...` or `/essays/zh-hans/...`. Each translated article keeps
-the same `translation_key`; add its localized Markdown source when it is ready.
+example `/tech/en/...` or `/essays/zh-hans/...`. English and Simplified Chinese
+are stored as Markdown sources. Traditional Chinese is generated from the
+Simplified Chinese source with OpenCC, while fenced and inline code remains
+unchanged. Each translation keeps the same `translation_key`.
 
 Application changes rebuild the OCaml/Bonsai bundle. Content-only changes use a
 lighter publish path that only regenerates post data.

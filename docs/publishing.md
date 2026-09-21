@@ -22,6 +22,11 @@ Use this shape:
 content/<area>/<locale>/<category>/<subcategory>/<yyyy-mm-dd-slug>.md
 ```
 
+Store English under `en` and Chinese under `zh-hans`. Do not create `zh-hant`
+source files: the generator produces Traditional Chinese metadata and article
+prose from each Simplified Chinese source. Fenced code blocks and inline code
+are excluded from conversion.
+
 Examples:
 
 ```text

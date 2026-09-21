@@ -2,11 +2,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import OpenCC from "opencc-js";
 
 const contentRoot = "content";
 const outputPath = process.argv[2] ?? "public/posts.js";
 const outputRoot = path.dirname(outputPath);
 const articlesRoot = path.join(outputRoot, "articles");
+const simplifiedToTraditional = OpenCC.Converter({ from: "cn", to: "t" });
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -241,6 +243,62 @@ function renderMarkdown(source) {
   return html.join("\n");
 }
 
+function convertMarkdownProse(source, convert) {
+  let inCodeBlock = false;
+
+  return source
+    .split("\n")
+    .map((line) => {
+      if (/^```/.test(line)) {
+        inCodeBlock = !inCodeBlock;
+        return line;
+      }
+
+      if (inCodeBlock) return line;
+
+      return line
+        .split(/(`[^`]*`)/g)
+        .map((part) => (part.startsWith("`") ? part : convert(part)))
+        .join("");
+    })
+    .join("\n");
+}
+
+function fencedCodeBlocks(source) {
+  const blocks = [];
+  let current = null;
+
+  for (const line of source.split("\n")) {
+    if (/^```/.test(line)) {
+      if (current === null) {
+        current = [];
+      } else {
+        blocks.push(current.join("\n"));
+        current = null;
+      }
+    } else if (current !== null) {
+      current.push(line);
+    }
+  }
+
+  return blocks;
+}
+
+function inlineCodeSpans(source) {
+  const spans = [];
+  let inCodeBlock = false;
+
+  for (const line of source.split("\n")) {
+    if (/^```/.test(line)) {
+      inCodeBlock = !inCodeBlock;
+    } else if (!inCodeBlock) {
+      spans.push(...[...line.matchAll(/`([^`]+)`/g)].map((match) => match[1]));
+    }
+  }
+
+  return spans;
+}
+
 function sexpAtom(value) {
   if (/^[A-Za-z0-9_./:-]+$/.test(value)) {
     return value;
@@ -268,6 +326,10 @@ function postFromFile(filePath) {
   }
 
   const [areaPath, localePath, categoryFromPath, subcategoryFromPath] = pathParts;
+  if (localePath === "zh-hant") {
+    throw new Error(`${filePath}: zh-hant is generated from the zh-hans source`);
+  }
+
   const { fields, body } = parseFrontmatter(fs.readFileSync(filePath, "utf8"), filePath);
 
   const date = fields.date ?? dateFromFilename(filePath);
@@ -312,6 +374,49 @@ function validatePostPath(post) {
   assertPathSegment(post.translationKey, "translation_key", post.filePath);
 }
 
+function traditionalVariant(post) {
+  return {
+    ...post,
+    title: simplifiedToTraditional(post.title),
+    locale: "Zh_hant",
+    localePath: "zh-hant",
+    tags: post.tags.map(simplifiedToTraditional),
+    summary: simplifiedToTraditional(post.summary),
+    body: convertMarkdownProse(post.body, simplifiedToTraditional),
+  };
+}
+
+function validateTranslations(posts) {
+  const variants = new Map();
+
+  for (const post of posts) {
+    const key = `${post.areaPath}:${post.translationKey}`;
+    const translations = variants.get(key) ?? new Map();
+    if (translations.has(post.localePath)) {
+      throw new Error(`${post.filePath}: duplicate ${post.localePath} translation for ${key}`);
+    }
+    translations.set(post.localePath, post);
+    variants.set(key, translations);
+  }
+
+  for (const [key, translations] of variants) {
+    const english = translations.get("en");
+    const chinese = translations.get("zh-hans");
+    if (english === undefined || chinese === undefined) continue;
+
+    const englishCode = fencedCodeBlocks(english.body);
+    const chineseCode = fencedCodeBlocks(chinese.body);
+    const englishInlineCode = inlineCodeSpans(english.body).sort();
+    const chineseInlineCode = inlineCodeSpans(chinese.body).sort();
+    if (
+      JSON.stringify(englishCode) !== JSON.stringify(chineseCode)
+      || JSON.stringify(englishInlineCode) !== JSON.stringify(chineseInlineCode)
+    ) {
+      throw new Error(`${key}: translated articles must keep code unchanged`);
+    }
+  }
+}
+
 function postToSexp(post) {
   return [
     "(",
@@ -346,8 +451,11 @@ function writeArticle(post) {
   fs.writeFileSync(outputFile, `${html}\n`);
 }
 
-const posts = walk(contentRoot)
-  .map(postFromFile)
+const sourcePosts = walk(contentRoot).map(postFromFile);
+validateTranslations(sourcePosts);
+
+const posts = sourcePosts
+  .flatMap((post) => (post.localePath === "zh-hans" ? [post, traditionalVariant(post)] : [post]))
   .sort((left, right) => right.date.localeCompare(left.date) || left.title.localeCompare(right.title));
 
 const sexp = `(${posts.map(postToSexp).join("\n ")})`;

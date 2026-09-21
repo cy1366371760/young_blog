@@ -3,6 +3,7 @@ title = "AtCoder ABC081A: Placing Marbles"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc081a-placing-marbles"
 tags = ["ocaml", "atcoder", "beginner", "strings"]
 summary = "Count the ones in a three-character binary string, while practising formatted input and a unit entry point."
 draft = false

@@ -8,8 +8,13 @@ subcategory="${4:-}"
 slug="${5:-}"
 
 if [[ -z "$content_area" || -z "$locale" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
-  echo "usage: scripts/new_post.sh <tech|essays> <en|zh-hans|zh-hant> <category> <subcategory> <slug>" >&2
+  echo "usage: scripts/new_post.sh <tech|essays> <en|zh-hans> <category> <subcategory> <slug>" >&2
   echo "example: scripts/new_post.sh tech en ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
+  exit 2
+fi
+
+if [[ "$locale" == "zh-hant" ]]; then
+  echo "zh-hant is generated from the zh-hans source; create or edit the zh-hans post instead" >&2
   exit 2
 fi
 

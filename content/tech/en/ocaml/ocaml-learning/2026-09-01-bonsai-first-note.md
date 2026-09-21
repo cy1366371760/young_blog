@@ -3,6 +3,7 @@ title = "Bonsai first note"
 date = "2026-09-01"
 category = "ocaml"
 subcategory = "ocaml-learning"
+translation_key = "bonsai-first-note"
 tags = ["ocaml", "bonsai", "jane-street"]
 draft = true
 comments = false

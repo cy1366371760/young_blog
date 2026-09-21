@@ -3,6 +3,7 @@ title = "AtCoder ABC085B: Kagami Mochi"
 date = "2026-09-10"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc085b-kagami-mochi"
 tags = ["ocaml", "atcoder", "beginner", "sorting", "recursion"]
 summary = "Sort the mochi diameters and count distinct values to find the largest possible kagami mochi stack."
 draft = false

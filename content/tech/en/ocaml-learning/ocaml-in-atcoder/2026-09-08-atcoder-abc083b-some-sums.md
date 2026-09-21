@@ -3,6 +3,7 @@ title = "AtCoder ABC083B: Some Sums"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc083b-some-sums"
 tags = ["ocaml", "atcoder", "beginner", "fold", "recursion"]
 summary = "Sum numbers whose decimal digit sums lie in a given range, using a string-based digit scan and a functional fold."
 draft = false

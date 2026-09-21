@@ -3,6 +3,7 @@ title = "OCaml in AtCoder: series start"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "ocaml-in-atcoder-start"
 tags = ["ocaml", "atcoder", "competitive-programming"]
 summary = "A starting page for collecting AtCoder examples, OCaml implementations, and short reflections on problem-solving patterns."
 draft = true

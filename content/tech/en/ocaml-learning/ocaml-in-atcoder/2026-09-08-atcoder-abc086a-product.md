@@ -3,6 +3,7 @@ title = "AtCoder ABC086A: Product"
 date = "2026-09-08"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
+translation_key = "atcoder-abc086a-product"
 tags = ["ocaml", "atcoder", "beginner", "arithmetic"]
 summary = "Determine whether the product of two integers is even or odd, with a note on structural equality in OCaml."
 draft = false

@@ -3,5 +3,6 @@ _opam/
 dist/
 public/articles/
 public/posts.js
+node_modules/
 
 *.install

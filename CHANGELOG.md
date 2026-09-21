@@ -14,6 +14,8 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 - Added OpenCC-based Traditional Chinese generation that preserves code.
 - Added a mandatory AI article workflow covering translation, PR creation,
   merge, and deployment verification.
+- Added rules for producing polished bilingual articles from review text and
+  related OCaml source files.
 - Added paired-source and shared-metadata validation for every article.
 - Added a content validation helper and paired article skeleton generator.
 - Added article detail routing and on-demand article body loading.

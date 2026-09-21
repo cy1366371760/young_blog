@@ -33,12 +33,17 @@ or draft-only work, an article request includes the complete publishing
 lifecycle:
 
 1. Update both the English and Simplified Chinese sources.
-2. Preserve all fenced and inline code exactly across translations.
-3. Validate content and generated language variants.
-4. Create a focused `codex/` branch and GitHub pull request.
-5. Wait for required checks, merge without bypassing repository protection, and
+2. When a folder contains a review-like text file, write the first article in
+   that file's language, edit it for clarity and flow, and embed referenced or
+   materially relevant `.ml` source files at the points where they are
+   discussed.
+3. Translate the finished article into the other maintained language.
+4. Preserve all fenced and inline code exactly across translations.
+5. Validate content and generated language variants.
+6. Create a focused `codex/` branch and GitHub pull request.
+7. Wait for required checks, merge without bypassing repository protection, and
    wait for all deployment workflows triggered by the merge.
-6. Verify the `deploy` branch contains or removes the English, Simplified
+8. Verify the `deploy` branch contains or removes the English, Simplified
    Chinese, and generated Traditional Chinese assets as requested.
 
 Do not report an article task as published merely because it was committed or

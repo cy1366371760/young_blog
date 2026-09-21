@@ -2,35 +2,37 @@
 set -euo pipefail
 
 content_area="${1:-}"
-locale="${2:-}"
-category="${3:-}"
-subcategory="${4:-}"
-slug="${5:-}"
+category="${2:-}"
+subcategory="${3:-}"
+slug="${4:-}"
 
-if [[ -z "$content_area" || -z "$locale" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
-  echo "usage: scripts/new_post.sh <tech|essays> <en|zh-hans> <category> <subcategory> <slug>" >&2
-  echo "example: scripts/new_post.sh tech en ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
-  exit 2
-fi
-
-if [[ "$locale" == "zh-hant" ]]; then
-  echo "zh-hant is generated from the zh-hans source; create or edit the zh-hans post instead" >&2
+if [[ -z "$content_area" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
+  echo "usage: scripts/new_post.sh <tech|essays> <category> <subcategory> <slug>" >&2
+  echo "example: scripts/new_post.sh tech ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
   exit 2
 fi
 
 date="$(date +%F)"
-path="content/$content_area/$locale/$category/$subcategory/$date-$slug.md"
+english_path="content/$content_area/en/$category/$subcategory/$date-$slug.md"
+chinese_path="content/$content_area/zh-hans/$category/$subcategory/$date-$slug.md"
 
-mkdir -p "$(dirname "$path")"
+for path in "$english_path" "$chinese_path"; do
+  if [[ -e "$path" ]]; then
+    echo "$path already exists" >&2
+    exit 1
+  fi
+done
 
-if [[ -e "$path" ]]; then
-  echo "$path already exists" >&2
-  exit 1
-fi
+mkdir -p "$(dirname "$english_path")" "$(dirname "$chinese_path")"
 
-cat >"$path" <<EOF
+write_post () {
+  local path="$1"
+  local title="$2"
+  local body="$3"
+
+  cat >"$path" <<EOF
 +++
-title = "TODO"
+title = "$title"
 date = "$date"
 category = "$category"
 subcategory = "$subcategory"
@@ -40,7 +42,11 @@ draft = true
 comments = false
 +++
 
-Write here.
+$body
 EOF
+}
 
-echo "$path"
+write_post "$english_path" "TODO: English title" "Write the English version here."
+write_post "$chinese_path" "TODO：中文标题" "在这里编写简体中文版本。"
+
+printf '%s\n%s\n' "$english_path" "$chinese_path"

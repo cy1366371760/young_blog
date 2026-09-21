@@ -30,17 +30,20 @@ are excluded from conversion.
 Examples:
 
 ```text
-content/tech/ocaml/ocaml-learning/2026-09-01-bonsai-first-note.md
-content/zh/notes/daily/2026-09-01-first-travel-note.md
+content/tech/en/ocaml/ocaml-learning/2026-09-01-bonsai-first-note.md
+content/tech/zh-hans/ocaml/ocaml-learning/2026-09-01-bonsai-first-note.md
+content/essays/en/notes/daily/2026-09-01-first-travel-note.md
+content/essays/zh-hans/notes/daily/2026-09-01-first-travel-note.md
 ```
 
 `content/inbox/` is for rough drafts that need sorting later.
 
 ## Mobile publishing through Codex
 
-Send Codex the content area, locale, category, subcategory, title, tags, and
-body. Codex can
-create the Markdown file and commit it through the GitHub plugin.
+Send Codex the content area, category, subcategory, title, tags, and body in
+either English or Chinese. Codex must create or update both maintained language
+sources, preserve code, validate the generated variants, open and merge a pull
+request, and verify deployment according to `docs/agent-content-workflow.md`.
 
 For content-only edits, this should be a fast deploy path: no opam switch, no
 Dune rebuild, and no js_of_ocaml compilation.

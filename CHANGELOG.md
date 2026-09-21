@@ -12,6 +12,10 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 - Added locale-aware article asset paths and an unavailable-translation state.
 - Added English and Simplified Chinese versions of every existing article.
 - Added OpenCC-based Traditional Chinese generation that preserves code.
+- Added a mandatory AI article workflow covering translation, PR creation,
+  merge, and deployment verification.
+- Added paired-source and shared-metadata validation for every article.
+- Added a content validation helper and paired article skeleton generator.
 - Added article detail routing and on-demand article body loading.
 - Added generated per-article HTML assets under `articles/`.
 - Added Cloudflare Pages SPA fallback support through `public/_redirects`.

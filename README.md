@@ -6,7 +6,7 @@ pipeline.
 Content type and language are independent. Source files use:
 
 ```text
-content/<tech|essays>/<en|zh-hans|zh-hant>/<category>/<subcategory>/<date>-<slug>.md
+content/<tech|essays>/<en|zh-hans>/<category>/<subcategory>/<date>-<slug>.md
 ```
 
 The corresponding public URLs begin with the same content type and locale, for
@@ -19,5 +19,7 @@ Application changes rebuild the OCaml/Bonsai bundle. Content-only changes use a
 lighter publish path that only regenerates post data.
 
 Project context for future maintainers and AI agents starts in `AGENTS.md`.
+The complete AI article workflow is documented in
+`docs/agent-content-workflow.md`.
 Current status is tracked in `docs/project-status.md`, and durable architecture
 decisions live under `docs/adr/`.

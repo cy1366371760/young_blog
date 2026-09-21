@@ -402,7 +402,17 @@ function validateTranslations(posts) {
   for (const [key, translations] of variants) {
     const english = translations.get("en");
     const chinese = translations.get("zh-hans");
-    if (english === undefined || chinese === undefined) continue;
+    if (english === undefined || chinese === undefined) {
+      throw new Error(`${key}: every article requires both en and zh-hans sources`);
+    }
+
+    if (
+      english.date !== chinese.date
+      || english.category !== chinese.category
+      || english.subcategory !== chinese.subcategory
+    ) {
+      throw new Error(`${key}: translated articles must share date, category, and subcategory`);
+    }
 
     const englishCode = fencedCodeBlocks(english.body);
     const chineseCode = fencedCodeBlocks(chinese.body);

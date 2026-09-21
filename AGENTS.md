@@ -25,6 +25,27 @@ and a static publishing pipeline.
 - Comments are intentionally not implemented yet, but the UI reserves a
   boundary for a future comments provider.
 
+## Mandatory Article Lifecycle
+
+For every AI-assisted article addition, edit, or deletion, follow
+`docs/agent-content-workflow.md`. Unless the user explicitly requests local-only
+or draft-only work, an article request includes the complete publishing
+lifecycle:
+
+1. Update both the English and Simplified Chinese sources.
+2. Preserve all fenced and inline code exactly across translations.
+3. Validate content and generated language variants.
+4. Create a focused `codex/` branch and GitHub pull request.
+5. Wait for required checks, merge without bypassing repository protection, and
+   wait for all deployment workflows triggered by the merge.
+6. Verify the `deploy` branch contains or removes the English, Simplified
+   Chinese, and generated Traditional Chinese assets as requested.
+
+Do not report an article task as published merely because it was committed or
+pushed. The deployment workflow must complete successfully. If permissions,
+reviews, or hosting configuration block a step, report the precise blocker and
+leave the PR in a reviewable state.
+
 ## Engineering Conventions
 
 - Use Dune and opam as the source of truth for OCaml builds.
@@ -46,6 +67,7 @@ npm ci
 opam exec -- dune build @fmt
 opam exec -- scripts/build_site.sh
 node scripts/generate_posts.mjs public/posts.js
+scripts/check_content.sh
 ```
 
 For a local static smoke test:
@@ -97,6 +119,8 @@ Cloudflare Pages should point at the `deploy` branch with:
 
 ## Before Opening A PR
 
+- For article changes, complete every step in
+  `docs/agent-content-workflow.md`.
 - Run `opam exec -- dune build @fmt`.
 - Run `opam exec -- scripts/build_site.sh` for application changes.
 - For content-only changes, run `node scripts/generate_posts.mjs public/posts.js`.

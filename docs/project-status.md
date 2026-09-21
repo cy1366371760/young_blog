@@ -46,6 +46,10 @@ static-only and should contain only browser assets such as `index.html`,
 - English and Simplified Chinese versions of every current article.
 - Build-time generation of Traditional Chinese with OpenCC from a single
   Simplified Chinese source, preserving code spans and code blocks.
+- Repository-level AI runbook for translating, validating, opening and merging
+  content PRs, and verifying deployment.
+- Build-time validation that every article has paired English and Simplified
+  Chinese sources with shared routing metadata and unchanged code.
 - Static build script that emits `dist/`.
 - GitHub Actions publishing to `deploy`.
 - Fast content publishing design.

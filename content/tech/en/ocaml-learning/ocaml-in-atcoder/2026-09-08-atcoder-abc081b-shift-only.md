@@ -1,7 +1,6 @@
 +++
 title = "AtCoder ABC081B: Shift only"
 date = "2026-09-08"
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 tags = ["ocaml", "atcoder", "beginner", "recursion", "bit-operations"]

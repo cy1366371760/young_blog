@@ -91,14 +91,27 @@ function assertPathSegment(value, field, filePath) {
   }
 }
 
-function sectionConstructor(section) {
-  switch (section) {
+function areaConstructor(area) {
+  switch (area) {
     case "tech":
-      return "Tech_en";
-    case "zh":
-      return "Zh_notes";
+      return "Tech";
+    case "essays":
+      return "Essays";
     default:
-      throw new Error(`unknown section: ${section}`);
+      throw new Error(`unknown content area: ${area}`);
+  }
+}
+
+function localeConstructor(locale) {
+  switch (locale) {
+    case "en":
+      return "En";
+    case "zh-hans":
+      return "Zh_hans";
+    case "zh-hant":
+      return "Zh_hant";
+    default:
+      throw new Error(`unknown locale: ${locale}`);
   }
 }
 
@@ -249,15 +262,19 @@ function sexpList(values) {
 
 function postFromFile(filePath) {
   const relPath = path.relative(contentRoot, filePath);
-  const [sectionFromPath, categoryFromPath, subcategoryFromPath] = relPath.split(path.sep);
+  const pathParts = relPath.split(path.sep);
+  if (pathParts.length !== 5) {
+    throw new Error(`${filePath}: expected content/<area>/<locale>/<category>/<subcategory>/<file>.md`);
+  }
+
+  const [areaPath, localePath, categoryFromPath, subcategoryFromPath] = pathParts;
   const { fields, body } = parseFrontmatter(fs.readFileSync(filePath, "utf8"), filePath);
 
-  const section = fields.section ?? sectionFromPath;
   const date = fields.date ?? dateFromFilename(filePath);
   const category = fields.category ?? categoryFromPath;
   const subcategory = fields.subcategory ?? subcategoryFromPath;
 
-  for (const [name, value] of Object.entries({ title: fields.title, section, date, category, subcategory })) {
+  for (const [name, value] of Object.entries({ title: fields.title, date, category, subcategory })) {
     if (typeof value !== "string" || value === "") {
       throw new Error(`${filePath}: missing required field: ${name}`);
     }
@@ -270,37 +287,44 @@ function postFromFile(filePath) {
 
   return {
     title: fields.title,
-    section: sectionConstructor(section),
-    sectionPath: section,
+    area: areaConstructor(areaPath),
+    areaPath,
+    locale: localeConstructor(localePath),
+    localePath,
     category,
     subcategory,
     date,
     tags,
     summary: fields.summary ?? summaryFromBody(body),
     slug: fields.slug ?? slugFromFilename(filePath),
+    translationKey: fields.translation_key ?? fields.slug ?? slugFromFilename(filePath),
     body,
     filePath,
   };
 }
 
 function validatePostPath(post) {
-  assertPathSegment(post.sectionPath, "section", post.filePath);
+  assertPathSegment(post.areaPath, "area", post.filePath);
+  assertPathSegment(post.localePath, "locale", post.filePath);
   assertPathSegment(post.category, "category", post.filePath);
   assertPathSegment(post.subcategory, "subcategory", post.filePath);
   assertPathSegment(post.slug, "slug", post.filePath);
+  assertPathSegment(post.translationKey, "translation_key", post.filePath);
 }
 
 function postToSexp(post) {
   return [
     "(",
     `(title ${sexpString(post.title)})`,
-    `(section ${post.section})`,
+    `(area ${post.area})`,
+    `(locale ${post.locale})`,
     `(category ${sexpString(post.category)})`,
     `(subcategory ${sexpString(post.subcategory)})`,
     `(date ${sexpAtom(post.date)})`,
     `(tags ${sexpList(post.tags)})`,
     `(summary ${sexpString(post.summary)})`,
     `(slug ${sexpString(post.slug)})`,
+    `(translation_key ${sexpString(post.translationKey)})`,
     ")",
   ].join(" ");
 }
@@ -311,7 +335,8 @@ function writeArticle(post) {
   const html = renderMarkdown(post.body);
   const outputFile = path.join(
     articlesRoot,
-    post.sectionPath,
+    post.areaPath,
+    post.localePath,
     post.category,
     post.subcategory,
     `${post.slug}.html`,

@@ -1,7 +1,6 @@
 +++
 title = "外出前的第一条记录"
 date = "2026-09-01"
-section = "zh"
 category = "notes"
 subcategory = "daily"
 tags = ["随记", "外出"]

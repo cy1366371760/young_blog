@@ -1,7 +1,6 @@
 +++
 title = "OCaml in AtCoder: series start"
 date = "2026-09-08"
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 tags = ["ocaml", "atcoder", "competitive-programming"]

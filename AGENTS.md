@@ -16,11 +16,12 @@ and a static publishing pipeline.
 
 ## Product Shape
 
-- Top-level sections:
-  - English technical learning notes.
-  - Chinese reflections, notes, and literary writing.
+- Content areas:
+  - Technical learning notes.
+  - Reflections, notes, and literary writing.
+- Supported locales: English, Simplified Chinese, and Traditional Chinese.
 - Content hierarchy:
-  `content/<section>/<category>/<subcategory>/<yyyy-mm-dd-slug>.md`
+  `content/<area>/<locale>/<category>/<subcategory>/<yyyy-mm-dd-slug>.md`
 - Comments are intentionally not implemented yet, but the UI reserves a
   boundary for a future comments provider.
 
@@ -75,7 +76,9 @@ Cloudflare Pages should point at the `deploy` branch with:
 - `public/index.html` loads `posts.js` before `app.js`.
 - `Post.load` reads `globalThis.BLOG_POSTS_SEXP`, parses it with sexp support,
   and falls back to sample data if the generated data is unavailable.
-- `Route` owns clean blog URLs and parses them into typed OCaml route values.
+- `Content_area` and `Locale` model independent content and language axes.
+- `Route` owns clean locale-aware blog URLs and parses them into typed OCaml
+  route values.
 - `Article_loader` fetches generated article HTML when the route selects an
   article. It uses a Bonsai state machine so stale responses do not overwrite
   newer navigation.

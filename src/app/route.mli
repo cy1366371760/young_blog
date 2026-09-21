@@ -1,7 +1,14 @@
 open! Core
 
+type context =
+  { area : Content_area.t
+  ; locale : Locale.t
+  }
+[@@deriving equal, sexp]
+
 type article =
-  { section : Section.t
+  { area : Content_area.t
+  ; locale : Locale.t
   ; category : string
   ; subcategory : string
   ; slug : string
@@ -9,29 +16,32 @@ type article =
 [@@deriving equal, sexp]
 
 type category =
-  { section : Section.t
+  { area : Content_area.t
+  ; locale : Locale.t
   ; category : string
   }
 [@@deriving equal, sexp]
 
 type subcategory =
-  { section : Section.t
+  { area : Content_area.t
+  ; locale : Locale.t
   ; category : string
   ; subcategory : string
   }
 [@@deriving equal, sexp]
 
 type t =
-  | Index of Section.t
+  | Index of context
   | Category of category
   | Subcategory of subcategory
   | Article of article
 [@@deriving equal, sexp]
 
-val url_var : t Bonsai_web_ui_url_var.t
-val section : t -> Section.t
+val context : t -> context
 val of_post : Post.t -> t
+val with_locale : t -> Locale.t -> t
+val index_for_area : t -> Content_area.t -> t
 val to_path : t -> string
-val article_asset_path : article -> string
 val article_asset_path_for_route : t -> string option
 val post_matches_article : Post.t -> article -> bool
+val url_var : t Bonsai_web_ui_url_var.t

@@ -2,57 +2,42 @@ open! Core
 
 type t =
   { title : string
-  ; section : Section.t
+  ; area : Content_area.t
+  ; locale : Locale.t
   ; category : string
   ; subcategory : string
   ; date : Date.t
   ; tags : string list
   ; summary : string
   ; slug : string
+  ; translation_key : string
   }
 [@@deriving sexp]
 
-let date_exn s = Date.of_string s
+let date_exn = Date.of_string
 
 let sample =
-  [ { title = "Reading Incremental as a Spreadsheet Engine"
-    ; section = Tech_en
+  [ { title = "Bonsai first note"
+    ; area = Content_area.Tech
+    ; locale = Locale.En
     ; category = "ocaml"
-    ; subcategory = "incremental"
-    ; date = date_exn "2026-08-22"
-    ; tags = [ "OCaml"; "Incremental"; "Bonsai" ]
-    ; summary =
-        "A first pass at self-adjusting computation through the lens of spreadsheet \
-         cells."
-    ; slug = "reading-incremental-as-a-spreadsheet-engine"
+    ; subcategory = "ocaml-learning"
+    ; date = date_exn "2026-09-01"
+    ; tags = [ "ocaml"; "bonsai"; "jane-street" ]
+    ; summary = "A first placeholder note for the English technical section."
+    ; slug = "bonsai-first-note"
+    ; translation_key = "bonsai-first-note"
     }
-  ; { title = "Building a Tag Index Without Rewalking the World"
-    ; section = Tech_en
-    ; category = "ocaml"
-    ; subcategory = "bonsai"
-    ; date = date_exn "2026-08-18"
-    ; tags = [ "Bonsai"; "Search"; "Performance" ]
-    ; summary =
-        "The small data flow we will later turn into an Incremental computation trace."
-    ; slug = "tag-index-without-rewalking"
-    }
-  ; { title = "夜里经过一座很安静的桥"
-    ; section = Zh_notes
+  ; { title = "外出前的第一条记录"
+    ; area = Content_area.Essays
+    ; locale = Locale.Zh_hans
     ; category = "notes"
     ; subcategory = "daily"
-    ; date = date_exn "2026-08-21"
-    ; tags = [ "随记"; "城市"; "记忆" ]
-    ; summary = "一点路灯、一段水声，以及一个人突然慢下来的时刻。"
-    ; slug = "quiet-bridge-at-night"
-    }
-  ; { title = "未完成小说片段：石头的回信"
-    ; section = Zh_notes
-    ; category = "writing"
-    ; subcategory = "fiction"
-    ; date = date_exn "2026-08-16"
-    ; tags = [ "文学创作"; "小说"; "草稿" ]
-    ; summary = "先保存片段，不急着解释它；以后也许会长成一篇完整的故事。"
-    ; slug = "stone-reply-fragment"
+    ; date = date_exn "2026-09-01"
+    ; tags = [ "随记"; "外出" ]
+    ; summary = "这是一篇中文区的占位随记。"
+    ; slug = "first-travel-note"
+    ; translation_key = "first-travel-note"
     }
   ]
 ;;
@@ -69,6 +54,7 @@ let load () =
      | _ -> sample)
 ;;
 
-let visible_in posts ~section =
-  List.filter posts ~f:(fun post -> Section.equal post.section section)
+let visible_in posts ~area ~locale =
+  List.filter posts ~f:(fun post ->
+    Content_area.equal post.area area && Locale.equal post.locale locale)
 ;;

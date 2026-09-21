@@ -19,7 +19,7 @@ There are two publish paths:
 Use this shape:
 
 ```text
-content/<section>/<category>/<subcategory>/<yyyy-mm-dd-slug>.md
+content/<area>/<locale>/<category>/<subcategory>/<yyyy-mm-dd-slug>.md
 ```
 
 Examples:
@@ -33,7 +33,8 @@ content/zh/notes/daily/2026-09-01-first-travel-note.md
 
 ## Mobile publishing through Codex
 
-Send Codex the section, category, subcategory, title, tags, and body. Codex can
+Send Codex the content area, locale, category, subcategory, title, tags, and
+body. Codex can
 create the Markdown file and commit it through the GitHub plugin.
 
 For content-only edits, this should be a fast deploy path: no opam switch, no
@@ -44,13 +45,13 @@ Dune rebuild, and no js_of_ocaml compilation.
 Generated article URLs follow the content hierarchy:
 
 ```text
-/<section>/<category>/<subcategory>/<slug>
+/<area>/<locale>/<category>/<subcategory>/<slug>
 ```
 
 The generated article body lives under:
 
 ```text
-/articles/<section>/<category>/<subcategory>/<slug>.html
+/articles/<area>/<locale>/<category>/<subcategory>/<slug>.html
 ```
 
 Cloudflare Pages should publish the `deploy` branch and honor `_redirects` so

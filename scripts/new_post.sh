@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-section="${1:-}"
-category="${2:-}"
-subcategory="${3:-}"
-slug="${4:-}"
+content_area="${1:-}"
+locale="${2:-}"
+category="${3:-}"
+subcategory="${4:-}"
+slug="${5:-}"
 
-if [[ -z "$section" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
-  echo "usage: scripts/new_post.sh <tech|zh> <category> <subcategory> <slug>" >&2
-  echo "example: scripts/new_post.sh tech ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
+if [[ -z "$content_area" || -z "$locale" || -z "$category" || -z "$subcategory" || -z "$slug" ]]; then
+  echo "usage: scripts/new_post.sh <tech|essays> <en|zh-hans|zh-hant> <category> <subcategory> <slug>" >&2
+  echo "example: scripts/new_post.sh tech en ocaml-learning ocaml-in-atcoder atcoder-abc086a-product" >&2
   exit 2
 fi
 
 date="$(date +%F)"
-path="content/$section/$category/$subcategory/$date-$slug.md"
+path="content/$content_area/$locale/$category/$subcategory/$date-$slug.md"
 
 mkdir -p "$(dirname "$path")"
 
@@ -26,9 +27,9 @@ cat >"$path" <<EOF
 +++
 title = "TODO"
 date = "$date"
-section = "$section"
 category = "$category"
 subcategory = "$subcategory"
+translation_key = "$slug"
 tags = []
 draft = true
 comments = false

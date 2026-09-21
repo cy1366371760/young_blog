@@ -1,7 +1,6 @@
 +++
 title = "AtCoder ABC085C: Otoshidama"
 date = "2026-09-11"
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 tags = ["ocaml", "atcoder", "beginner", "math", "sequence"]

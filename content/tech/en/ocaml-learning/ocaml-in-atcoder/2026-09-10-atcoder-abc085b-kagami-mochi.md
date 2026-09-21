@@ -1,7 +1,6 @@
 +++
 title = "AtCoder ABC085B: Kagami Mochi"
 date = "2026-09-10"
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 tags = ["ocaml", "atcoder", "beginner", "sorting", "recursion"]

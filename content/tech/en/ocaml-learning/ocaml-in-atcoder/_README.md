@@ -16,7 +16,6 @@ Use this subcategory for:
 Use this category path:
 
 ```toml
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 ```

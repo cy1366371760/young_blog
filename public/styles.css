@@ -35,6 +35,8 @@ a {
 .topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   min-height: 64px;
   padding: 0 28px;
   border-bottom: 1px solid var(--border);
@@ -46,6 +48,12 @@ a {
   align-items: center;
   gap: 4px;
   min-width: 0;
+}
+
+.locale-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .section-tab {
@@ -65,8 +73,26 @@ a {
   white-space: nowrap;
 }
 
+.locale-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .section-tab:hover,
-.section-tab.is-active {
+.section-tab.is-active,
+.locale-tab:hover,
+.locale-tab.is-active {
   background: var(--accent-surface);
   color: var(--text);
 }
@@ -423,6 +449,19 @@ a {
   }
 
   .section-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .locale-tabs {
     width: 100%;
     overflow-x: auto;
   }

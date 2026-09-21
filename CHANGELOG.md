@@ -7,6 +7,9 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Added
 
+- Added independent content-area and locale route dimensions.
+- Added English, Simplified Chinese, and Traditional Chinese UI localization.
+- Added locale-aware article asset paths and an unavailable-translation state.
 - Added article detail routing and on-demand article body loading.
 - Added generated per-article HTML assets under `articles/`.
 - Added Cloudflare Pages SPA fallback support through `public/_redirects`.
@@ -21,6 +24,8 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Changed
 
+- Moved source content under `content/<area>/<locale>/...`.
+- Updated the content generator and new-post helper for locale-aware content.
 - Updated fast content publishing to deploy both `posts.js` and `articles/`.
 - Humanized known category and subcategory labels on article cards.
 - Replaced the flat section index with navigable category and subcategory pages.

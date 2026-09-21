@@ -1,7 +1,6 @@
 +++
 title = "AtCoder ABC081A: Placing Marbles"
 date = "2026-09-08"
-section = "tech"
 category = "ocaml-learning"
 subcategory = "ocaml-in-atcoder"
 tags = ["ocaml", "atcoder", "beginner", "strings"]

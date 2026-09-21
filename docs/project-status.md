@@ -1,14 +1,15 @@
 # Project Status
 
-Last updated: 2026-09-08.
+Last updated: 2026-09-21.
 
 ## Current State
 
-The project has an OCaml/Bonsai single-page blog shell with two top-level
-sections. The UI uses the selected bilingual journal style and reserves a future
-comments boundary.
+The project has an OCaml/Bonsai single-page blog shell. Content area (`Tech` or
+`Essays`) and locale (`English`, `简体中文`, or `繁體中文`) are independent route
+dimensions. The UI localizes its navigation and supporting copy, and reserves a
+future comments boundary.
 
-The English technical section now has an `ocaml-learning` category with an
+The English technical area now has an `ocaml-learning` category with an
 `ocaml-in-atcoder` subcategory for AtCoder examples, OCaml solutions, and
 problem-solving reflections.
 
@@ -37,8 +38,11 @@ static-only and should contain only browser assets such as `index.html`,
 
 - Dune/opam project skeleton.
 - Bonsai frontend entry point.
-- Two top-level blog sections.
-- Initial post model and typed section model.
+- Independent typed content-area and locale models.
+- URL-driven language selection for English, Simplified Chinese, and
+  Traditional Chinese.
+- Localized navigation and UI copy, including an explicit message when an
+  article translation has not been published yet.
 - Static build script that emits `dist/`.
 - GitHub Actions publishing to `deploy`.
 - Fast content publishing design.
@@ -54,10 +58,12 @@ static-only and should contain only browser assets such as `index.html`,
 ## Next Steps
 
 1. Configure Cloudflare Pages to serve the `deploy` branch and honor `_redirects`.
-2. Add Bonsai state for query, tags, category, and subcategory filters.
-3. Replace the illustrative Incremental trace panel with real state-driven
+2. Add translated Markdown variants for the existing English technical notes
+   and Simplified Chinese essay.
+3. Add Bonsai state for query, tags, category, and subcategory filters.
+4. Replace the illustrative Incremental trace panel with real state-driven
    highlights.
-4. Add a small smoke test script for generated assets.
+5. Add a small smoke test script for generated assets.
 
 ## Known Risks
 

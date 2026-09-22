@@ -1,0 +1,286 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginner Contest 304</li>
+<li>Problem: E - Good Graph</li>
+<li>Link: <a href="https://atcoder.jp/contests/abc304/tasks/abc304_e?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>We are given an undirected graph and several pairs of vertices that must remain disconnected. Each query independently adds one edge to the original graph and asks whether every restriction still holds.</p>
+<p>The limits reach two hundred thousand, so traversing the graph again for every query is too expensive. What matters is not each individual vertex, but the connected components already formed in the original graph.</p>
+<h2>Core Idea</h2>
+<p>First, use a disjoint-set union structure to merge every original edge. For each forbidden pair of vertices, find the roots of their components, turn the two roots into an unordered pair, and insert it into a hash set.</p>
+<p>For a query, map both endpoints to component roots and canonicalize them in the same way. If the pair is in the forbidden set, the new edge would connect a restricted pair of vertices, so the answer is No. Otherwise, it is Yes.</p>
+<p>An unordered pair needs one canonical representation. For example, always store the smaller root first. Input direction then has no effect on lookup, and there is no need to store or test both directions.</p>
+<p>With path compression and union by rank, the total running time, including input, is near-linear: <code>O((N + M + K + Q) α(N))</code>. The extra space usage is <code>O(N + K)</code>.</p>
+<h1>Problems in the First Version</h1>
+<p>The initial <code>old_impl.ml</code> already found the DSU-based direction, but it left several details that could be simpler or more precise.</p>
+<p>First, Base&#39;s <code>List.init</code> calls <code>f</code> from <code>n - 1</code> down to <code>0</code> while constructing a list whose final order is correct. If <code>f</code> calls <code>Scanf.scanf</code>, each call still consumes the next line, so the values in the resulting list are reversed relative to the input. A following <code>List.rev</code> restores their order, but this relies on subtle effect timing. A <code>for</code> loop makes sequential contest input clearer.</p>
+<p>Second, field order in a record expression does not indicate value direction. Both <code>{ u; v }</code> and <code>{ v; u }</code> store the current u and v under their named fields; actually swapping the values requires <code>{ u = v; v = u }</code>. Rather than test both directions each time, it is cleaner to canonicalize the unordered pair when creating it.</p>
+<p>Finally, this version compares integers with ordinary equality and separates input, computation, and output into several lists. It can work, but its control flow is more complicated than the problem. The statement also guarantees that the original graph is already good, so a separate global bad-state check is unnecessary for answering the queries.</p>
+<pre><code class="language-ocaml">open Core
+module type DSU = sig
+  type t
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end
+module Dsu : DSU = struct
+  type t = int Array.t
+  let create n =
+    Array.init n ~f:Fn.id
+  let rec find t a = 
+    if t.(a) = a then a 
+    else 
+      let fa = find t t.(a) in (
+        t.(a) &lt;- fa ;
+        fa
+      )
+  let union t a b = 
+    let fa = find t a in
+    let fb = find t b in
+    if fa = fb then ()
+    else t.(fa) &lt;- fb
+end
+
+type edge = {
+  u : int;
+  v : int;
+}
+[@@deriving compare, sexp]
+
+let () = 
+  let n, m = Scanf.scanf &quot; %d %d&quot; (fun n m -&gt; n, m) in
+  let edges = List.init m ~f:(fun _ -&gt; Scanf.scanf &quot; %d %d&quot; (
+    fun u v -&gt; {u; v}
+  )) |&gt; List.rev
+  in 
+  let dsu = Dsu.create (n+1) in 
+  List.iter edges ~f:(fun {u; v} -&gt;
+      Dsu.union dsu u v
+    );
+  let k = Scanf.scanf &quot; %d&quot; (fun k -&gt; k) in
+  let module ConditionSet = Set.Make (struct
+    type t = edge
+    [@@deriving compare, sexp]
+  end
+  ) in
+  let conditions =
+    List.init k ~f:(fun _ -&gt;
+      Scanf.scanf &quot; %d %d&quot; (fun u v -&gt; { u = Dsu.find dsu u; v = Dsu.find dsu v }))
+    |&gt; List.rev
+  in
+  let always_bad = List.exists conditions ~f:(fun {u; v} -&gt; u = v) in
+  let condition_set =
+    ConditionSet.of_list conditions
+  in
+  let q = Scanf.scanf &quot; %d&quot; (fun q -&gt; q) in
+  let qrys =
+    List.init q ~f:(fun _ -&gt;
+      Scanf.scanf &quot; %d %d&quot; (fun u v -&gt; {u; v}))
+    |&gt; List.rev
+  in
+  let ans = List.map qrys ~f:(fun {u; v} -&gt;
+      if always_bad then &quot;No&quot;
+      else
+        let u = Dsu.find dsu u in
+        let v = Dsu.find dsu v in
+        if Set.mem condition_set {u; v} ||
+          Set.mem condition_set {u = v; v = u}
+        then &quot;No&quot; else &quot;Yes&quot;
+    ) in
+  List.iter ans ~f:(fun s -&gt; print_endline s)</code></pre>
+<h1>Manual Improvement: Make Data Structures Express the Problem</h1>
+<p><code>main.ml</code> makes several important changes: the DSU gains union by rank; input and output use <code>for</code> loops; forbidden relations move to a <code>Hash_set</code>; and <code>OrderPair.create</code> establishes one root order at the boundary.</p>
+<p><code>[@@deriving compare, sexp, hash]</code> generates the comparison, serialization, and hashing functions that containers need. This avoids error-prone boilerplate and lets the module work directly with Core&#39;s collection interfaces.</p>
+<p>Integer comparison now uses <code>Ordering.of_int (Int.compare ...)</code> and matches Less, Equal, and Greater. This avoids polymorphic comparison and makes the intent of all three branches explicit.</p>
+<pre><code class="language-ocaml">open Core
+
+let read_int () = Scanf.scanf &quot; %d&quot; (fun x -&gt; x)
+let read_pair_int() = Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; (x, y))
+
+module type DSU = sig
+  type t
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end
+module Dsu : DSU = struct
+  type t = {
+    fa   : int Array.t;
+    height : int Array.t; 
+  }
+  let create n =
+    {
+      fa = Array.init n ~f:Fn.id;
+      height = Array.init n ~f:(Fn.const 1);
+    }
+  let rec find t a = 
+    if Int.equal t.fa.(a) a then a 
+    else 
+      let root = find t t.fa.(a) in (
+        t.fa.(a) &lt;- root;
+        root
+      )
+  let union t a b = 
+    let root_a = find t a in
+    let root_b = find t b in
+    if Int.equal root_a root_b then ()
+    else 
+      let ht_a = t.height.(root_a) in
+      let ht_b = t.height.(root_b) in
+      match Ordering.of_int (Int.compare ht_a ht_b ) with
+      | Less -&gt; (t.fa.(root_a) &lt;- root_b)
+      | Greater -&gt; (t.fa.(root_b) &lt;- root_a)
+      | Equal -&gt; (t.fa.(root_b) &lt;- root_a; t.height.(root_a) &lt;- ht_a + 1)
+end
+
+module OrderPair = struct
+  type t = {
+    lo : int;
+    hi : int;
+  }
+  [@@deriving compare, sexp, hash]
+  let create a b =
+    match Ordering.of_int (Int.compare a b) with
+    | Less | Equal -&gt; {lo = a; hi = b}
+    | Greater -&gt; {lo = b; hi = a}
+end
+
+let () = 
+  let n, m = read_pair_int() in
+  let dsu = Dsu.create (n+1) in 
+  for _ = 1 to m do 
+    let (a, b) = read_pair_int() in
+    Dsu.union dsu a b
+  done;
+  let k = read_int() in
+  let ban_set = Hash_set.create ~size:k (module OrderPair) in
+  for _ = 1 to k do
+    let (a, b) = read_pair_int() in
+    let rt_a = Dsu.find dsu a in
+    let rt_b = Dsu.find dsu b in 
+    Hash_set.add ban_set (OrderPair.create rt_a rt_b)
+  done;
+  let q = read_int() in
+  for _ = 1 to q do
+    let (u, v) = read_pair_int() in
+    let u = Dsu.find dsu u in
+    let v = Dsu.find dsu v in
+    if Hash_set.mem ban_set (OrderPair.create u v)
+    then print_endline &quot;No&quot; else print_endline &quot;Yes&quot;
+  done</code></pre>
+<h1>Final Cleanup: Semantic Names and Encapsulation</h1>
+<p><code>gpt_optimize.ml</code> does not change the algorithm. It makes the implementation better match the model it represents.</p>
+<ul>
+<li>parent and rank are more direct than fa and height; Component_pair and forbidden also match the problem better than generic pair and ban_set names.</li>
+<li><code>component_pair_of_vertices</code> centralizes the “find roots and canonicalize” step, so reading restrictions and answering queries do not duplicate it.</li>
+<li>Dsu and Component_pair expose only their minimal interfaces, keeping their arrays and record representations private.</li>
+<li><code>Array.create</code> clearly initializes every rank to zero, while <code>Fn.id</code> keeps the one-integer reader concise.</li>
+</ul>
+<p>Writing a signature-constrained module all at once can make an editor show many temporary type errors while its implementation is incomplete. During exploration, one option is to define a module type first, finish the module, and add the constraint afterward; larger projects usually put the public interface in an mli file. For this single-file contest solution, the final inline signatures remain compact while preserving clear abstraction boundaries.</p>
+<pre><code class="language-ocaml">open Core
+
+let read_int () =
+  Scanf.scanf &quot; %d&quot; Fn.id
+
+let read_int_pair () =
+  Scanf.scanf &quot; %d %d&quot; (fun a b -&gt; a, b)
+
+module Dsu : sig
+  type t
+
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end = struct
+  type t =
+    { parent : int array
+    ; rank : int array
+    }
+
+  let create n =
+    { parent = Array.init n ~f:Fn.id
+    ; rank = Array.create ~len:n 0
+    }
+
+  let rec find t x =
+    if Int.equal t.parent.(x) x
+    then x
+    else (
+      let root = find t t.parent.(x) in
+      t.parent.(x) &lt;- root;
+      root)
+
+  let union t a b =
+    let root_a = find t a in
+    let root_b = find t b in
+    if not (Int.equal root_a root_b)
+    then (
+      let rank_a = t.rank.(root_a) in
+      let rank_b = t.rank.(root_b) in
+      match Ordering.of_int (Int.compare rank_a rank_b) with
+      | Less -&gt;
+        t.parent.(root_a) &lt;- root_b
+      | Greater -&gt;
+        t.parent.(root_b) &lt;- root_a
+      | Equal -&gt;
+        t.parent.(root_b) &lt;- root_a;
+        t.rank.(root_a) &lt;- rank_a + 1)
+end
+
+module Component_pair : sig
+  type t
+  [@@deriving compare, sexp, hash]
+
+  val create : int -&gt; int -&gt; t
+end = struct
+  type t =
+    { smaller : int
+    ; larger : int
+    }
+  [@@deriving compare, sexp, hash]
+
+  let create a b =
+    match Ordering.of_int (Int.compare a b) with
+    | Less | Equal -&gt; { smaller = a; larger = b }
+    | Greater -&gt; { smaller = b; larger = a }
+end
+
+let component_pair_of_vertices dsu a b =
+  Component_pair.create
+    (Dsu.find dsu a)
+    (Dsu.find dsu b)
+
+let () =
+  let n, m = read_int_pair () in
+  let dsu = Dsu.create (n + 1) in
+
+  for _ = 1 to m do
+    let a, b = read_int_pair () in
+    Dsu.union dsu a b
+  done;
+
+  let k = read_int () in
+  let forbidden =
+    Hash_set.create ~size:k (module Component_pair)
+  in
+
+  for _ = 1 to k do
+    let a, b = read_int_pair () in
+    Hash_set.add forbidden
+      (component_pair_of_vertices dsu a b)
+  done;
+
+  let q = read_int () in
+  for _ = 1 to q do
+    let u, v = read_int_pair () in
+    let pair =
+      component_pair_of_vertices dsu u v
+    in
+    print_endline
+      (if Hash_set.mem forbidden pair
+       then &quot;No&quot;
+       else &quot;Yes&quot;)
+  done</code></pre>
+<h1>Takeaways</h1>
+<p>The important improvement was not a more complicated algorithm, but making the code&#39;s representation match the problem: vertices first map to components, restricted relations become canonical unordered component pairs, and each query performs only two root lookups and one hash lookup.</p>
+<p>It is equally useful to make effects explicit, restrict comparison to concrete types, and expose only the operations a caller needs. The algorithm barely changes across the three versions, but the final control flow, names, and boundaries are much easier to understand.</p>

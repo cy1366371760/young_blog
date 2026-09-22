@@ -1,0 +1,78 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: ABC085C - Otoshidama</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/abc085_c?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>Given <code>N</code> bills worth a total of <code>Y</code> yen, find a possible number of <code>10000</code>-, <code>5000</code>-, and <code>1000</code>-yen bills. Print <code>-1 -1 -1</code> when no such combination exists.</p>
+<h2>Idea</h2>
+<p>Choose the number of <code>10000</code>-yen bills first. After that choice, only the number and value of <code>5000</code>- and <code>1000</code>-yen bills remain. Those two unknowns are determined by two equations, so there is no need for a second nested loop.</p>
+<p>For <code>a</code> <code>5000</code>-yen bills and <code>b</code> <code>1000</code>-yen bills, with <code>num</code> bills and <code>total</code> yen remaining:</p>
+<pre><code class="language-text">5000a + 1000b = total
+a + b = num</code></pre>
+<p>Subtracting <code>1000 * (a + b)</code> from the first equation gives:</p>
+<pre><code class="language-text">4000a = total - 1000 * num</code></pre>
+<p>The right-hand side must be non-negative and divisible by <code>4000</code>. Then <code>b</code> is simply <code>num - a</code>.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Enumerate <code>n10000</code> from <code>0</code> through <code>N</code>.</li>
+<li>Let the remaining bill count be <code>N - n10000</code> and subtract the chosen bills&#39;</li>
+<p>value from <code>Y</code>.</p>
+<li>Solve the two-equation remainder and validate that both counts are</li>
+<p>non-negative.</p>
+<li>Return the first valid triple, or <code>-1 -1 -1</code> if none exists.</li>
+</ul>
+<p>The running time is <code>O(N)</code>. The <code>better.ml</code> implementation uses <code>Sequence</code>, so it produces candidates lazily rather than allocating a list of <code>N + 1</code> values.</p>
+<h2>Reflection</h2>
+<p><code>Sequence.range</code> is a good fit here because candidates are consumed one at a time and the search stops at the first answer. In contrast, <code>List.init</code> builds the entire candidate list before <code>List.find_map</code> begins searching. The asymptotic running time is unchanged, but the sequence version uses less intermediate space.</p>
+<p>The labeled arguments in <code>solve_remaining ~num ~total</code> make two integer inputs with different meanings harder to swap accidentally. They also make the call site read like the equation it represents.</p>
+<p><code>find_map</code> does more than identify a matching input: it returns the first non-<code>None</code> value produced by the mapping function. That makes it natural to keep the solved <code>n10000</code>, <code>n5000</code>, and <code>n1000</code> counts together as the final triple.</p>
+<h2>Original OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+(* 5000a + 1000b = tot, a + b = num *)
+let solve num tot =
+  let a_4000 = tot - num * 1000 in
+  if a_4000 &lt; 0 || a_4000 mod 4000 &lt;&gt; 0 then None
+  else let a = a_4000 / 4000 in
+  let b = num - a in
+  if a &lt; 0 || b &lt; 0 then None
+  else Some(a, b)
+
+let () =
+  let n,y = Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; (x, y)) in
+  List.init (n + 1) ~f:(fun x -&gt; x)
+  |&gt; List.find_map ~f:(fun x -&gt; solve (n - x) (y - 10000 * x))
+  |&gt; function
+  | None -&gt; printf &quot;-1 -1 -1\n&quot;
+  | Some(a,b) -&gt; printf &quot;%d %d %d\n&quot; (n-a-b) a b</code></pre>
+<h2>Improved OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let solve_remaining ~num ~total =
+  let excess = total - (num * 1000) in
+  if excess &lt; 0 || excess mod 4000 &lt;&gt; 0 then
+    None
+  else
+    let n5000 = excess / 4000 in
+    let n1000 = num - n5000 in
+    if n5000 &lt;= num then
+      Some (n5000, n1000)
+    else
+      None
+
+let () =
+  let n, y = Scanf.scanf &quot; %d %d&quot; (fun n y -&gt; n, y) in
+
+  Sequence.range 0 (n + 1)
+  |&gt; Sequence.find_map ~f:(fun n10000 -&gt;
+    solve_remaining
+      ~num:(n - n10000)
+      ~total:(y - (10000 * n10000))
+    |&gt; Option.map ~f:(fun (n5000, n1000) -&gt;
+      n10000, n5000, n1000))
+  |&gt; function
+  | Some (a, b, c) -&gt;
+      printf &quot;%d %d %d\n&quot; a b c
+  | None -&gt;
+      printf &quot;-1 -1 -1\n&quot;</code></pre>

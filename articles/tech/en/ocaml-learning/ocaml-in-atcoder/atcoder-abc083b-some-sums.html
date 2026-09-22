@@ -1,0 +1,40 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: ABC083B - Some Sums</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/abc083_b?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>For every integer from <code>1</code> to <code>N</code>, include it in the answer when the sum of its decimal digits is between <code>A</code> and <code>B</code>, inclusive.</p>
+<h2>Idea</h2>
+<p>The constraint on <code>N</code> is small enough to inspect every candidate. Convert each candidate to a string, add its digit characters, and fold the accepted candidates into the final sum.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Parse <code>N</code>, <code>A</code>, and <code>B</code> from the first input line.</li>
+<li>For every integer in <code>1 .. N</code>, compute its decimal digit sum.</li>
+<li>Add the integer to the accumulator exactly when that sum is in <code>[A, B]</code>.</li>
+</ul>
+<p>The running time is <code>O(N log N)</code>, due to processing the decimal digits of each candidate. <code>List.range</code> materializes the candidates, so this implementation uses <code>O(N)</code> extra space.</p>
+<h2>Reflection</h2>
+<p>Converting a number to a string and enumerating its characters is clear and fully sufficient for these constraints. An arithmetic digit-sum function that repeatedly takes the final digit would avoid the temporary string allocation.</p>
+<p>Matching a split input line is explicit but can feel verbose. For more general contest input, it is worth building a small whitespace-token reader. <code>Scanf</code> can also be convenient for simple fixed formats.</p>
+<p><code>List.fold (List.range 1 (n + 1))</code> avoids a mutable <code>for</code>-loop accumulator, but the intermediate list costs space. That trade-off is harmless here, yet it is a useful habit to notice.</p>
+<p><code>function</code> is shorthand for <code>fun x -&gt; match x with ...</code>: the <code>x</code> is a fresh function parameter, not an existing variable from the surrounding scope.</p>
+<h2>OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let count_sum_digits x = x
+ |&gt; Int.to_string
+ |&gt; String.fold ~init:0 ~f:(fun acc c -&gt; acc + Char.to_int c - Char.to_int &#39;0&#39;)
+
+let () =
+  let n, a, b = In_channel.input_line_exn In_channel.stdin
+  |&gt; String.split ~on:&#39; &#39;
+  |&gt; function
+  | [n; a; b] -&gt; Int.of_string n, Int.of_string a, Int.of_string b
+  | _ -&gt; failwith &quot;gg&quot;
+  in
+  let ans = List.fold (List.range 1 (n+1)) ~init:0 ~f:(fun acc x -&gt;
+    let digit_sum = count_sum_digits x in
+    if a &lt;= digit_sum &amp;&amp; digit_sum &lt;= b then acc + x
+    else acc) in
+  printf &quot;%d\n&quot; ans</code></pre>

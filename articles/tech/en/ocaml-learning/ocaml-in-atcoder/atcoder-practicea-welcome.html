@@ -1,0 +1,25 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: PracticeA - Welcome to AtCoder</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/practice_1?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>Given three integers and one string, print the sum of the integers followed by the string.</p>
+<h2>Idea</h2>
+<p>This is an input/output exercise. The only small wrinkle is that the input is split across three lines, while <code>Scanf.scanf</code> can consume whitespace between tokens regardless of the line boundaries.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Read <code>a</code>, <code>b</code>, <code>c</code>, and <code>s</code>.</li>
+<li>Compute <code>a + b + c</code>.</li>
+<li>Print the sum and <code>s</code>, separated by one space.</li>
+</ul>
+<p>The running time and extra space are both constant.</p>
+<h2>Reflection</h2>
+<p>This was my first example. It was a useful way to see the full contest loop in OCaml: read standard input, compute a result, and print it in the required format.</p>
+<h2>OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%d %d %d %s&quot; (fun a b c s -&gt;
+    let sum = a + b + c in
+    printf &quot;%d %s\n&quot; sum s)</code></pre>

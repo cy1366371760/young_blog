@@ -1,0 +1,25 @@
+<h1>问题</h1>
+<ul>
+<li>平台：AtCoder Beginners Selection</li>
+<li>题目：PracticeA - Welcome to AtCoder</li>
+<li>链接：<a href="https://atcoder.jp/contests/abs/tasks/practice_1?lang=en">AtCoder 题目说明</a></li>
+</ul>
+<p>给定三个整数和一个字符串，输出整数之和，后面再输出该字符串。</p>
+<h2>思路</h2>
+<p>这是一道输入输出练习。唯一需要稍加注意的是，输入分布在三行中，而 <code>Scanf.scanf</code> 可以跨越行边界读取由空白分隔的标记。</p>
+<h2>算法</h2>
+<ul>
+<li>读取 <code>a</code>、<code>b</code>、<code>c</code> 和 <code>s</code>。</li>
+<li>计算 <code>a + b + c</code>。</li>
+<li>输出总和与 <code>s</code>，中间以一个空格分隔。</li>
+</ul>
+<p>时间复杂度和额外空间复杂度都是常数。</p>
+<h2>反思</h2>
+<p>这是我的第一个示例。它适合用来了解 OCaml 竞赛程序的完整流程：读取标准输入、计算结果，再按要求的格式输出。</p>
+<h2>OCaml 实现</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%d %d %d %s&quot; (fun a b c s -&gt;
+    let sum = a + b + c in
+    printf &quot;%d %s\n&quot; sum s)</code></pre>

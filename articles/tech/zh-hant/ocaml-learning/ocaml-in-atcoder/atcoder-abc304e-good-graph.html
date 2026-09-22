@@ -1,0 +1,286 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginner Contest 304</li>
+<li>題目：E - Good Graph</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abc304/tasks/abc304_e?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>給定一張無向圖，以及若干對不能互相連通的頂點。每次詢問獨立地向原圖加入一條邊，判斷加入後是否仍滿足所有限制。</p>
+<p>約束規模達到二十萬，不能爲每次詢問重新遍歷圖。真正重要的並不是單個頂點，而是原圖中已經形成的連通分量。</p>
+<h2>核心思路</h2>
+<p>先用並查集合並原圖的所有邊。對於每對禁止連通的頂點，分別找到它們所屬分量的根，並把這兩個根組成無序對，存入哈希集合。</p>
+<p>回答詢問時，同樣把兩個端點映射到分量根並規範化爲無序對：如果它出現在禁配集合中，新增邊會讓某對受限頂點連通，答案是 No；否則答案是 Yes。</p>
+<p>無序對必須使用統一表示。例如，總把較小的根放在前面。這樣輸入方向不會影響查找，也不必分別保存或查詢兩個方向。</p>
+<p>並查集使用路徑壓縮和按秩合併。包括讀入在內，整體時間複雜度是近似線性的 <code>O((N + M + K + Q) α(N))</code>，額外空間複雜度是 <code>O(N + K)</code>。</p>
+<h1>從第一版中發現的問題</h1>
+<p>最初的 <code>old_impl.ml</code> 已經抓住了並查集方向，但仍保留了不少可以簡化或澄清的地方。</p>
+<p>首先，Base 的 <code>List.init</code> 爲了構造最終順序正確的列表，會按 <code>n - 1</code> 到 <code>0</code> 的順序調用 <code>f</code>。如果 <code>f</code> 內執行 <code>Scanf.scanf</code>，每次調用仍會消費下一行，因此生成列表中的值與輸入順序相反。後接 <code>List.rev</code> 可以恢復值的順序，但這種寫法依賴不直觀的副作用時序；對於競賽式順序輸入，直接使用 <code>for</code> 循環更清楚。</p>
+<p>其次，記錄表達式中的字段順序不表示值的方向。<code>{ u; v }</code> 和 <code>{ v; u }</code> 都只是按字段名保存當前的 u、v；真正交換值需要寫成 <code>{ u = v; v = u }</code>。不過與其每次查兩個方向，更自然的辦法是在創建時就規範化無序對。</p>
+<p>最後，這一版用普通等號比較整數，也把輸入、計算和輸出分成多份列表。程序可以工作，但控制流比問題本身更復雜。題目還保證原圖本來就是 good graph，因此額外的全局壞狀態判斷並不是解決詢問所必需的。</p>
+<pre><code class="language-ocaml">open Core
+module type DSU = sig
+  type t
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end
+module Dsu : DSU = struct
+  type t = int Array.t
+  let create n =
+    Array.init n ~f:Fn.id
+  let rec find t a = 
+    if t.(a) = a then a 
+    else 
+      let fa = find t t.(a) in (
+        t.(a) &lt;- fa ;
+        fa
+      )
+  let union t a b = 
+    let fa = find t a in
+    let fb = find t b in
+    if fa = fb then ()
+    else t.(fa) &lt;- fb
+end
+
+type edge = {
+  u : int;
+  v : int;
+}
+[@@deriving compare, sexp]
+
+let () = 
+  let n, m = Scanf.scanf &quot; %d %d&quot; (fun n m -&gt; n, m) in
+  let edges = List.init m ~f:(fun _ -&gt; Scanf.scanf &quot; %d %d&quot; (
+    fun u v -&gt; {u; v}
+  )) |&gt; List.rev
+  in 
+  let dsu = Dsu.create (n+1) in 
+  List.iter edges ~f:(fun {u; v} -&gt;
+      Dsu.union dsu u v
+    );
+  let k = Scanf.scanf &quot; %d&quot; (fun k -&gt; k) in
+  let module ConditionSet = Set.Make (struct
+    type t = edge
+    [@@deriving compare, sexp]
+  end
+  ) in
+  let conditions =
+    List.init k ~f:(fun _ -&gt;
+      Scanf.scanf &quot; %d %d&quot; (fun u v -&gt; { u = Dsu.find dsu u; v = Dsu.find dsu v }))
+    |&gt; List.rev
+  in
+  let always_bad = List.exists conditions ~f:(fun {u; v} -&gt; u = v) in
+  let condition_set =
+    ConditionSet.of_list conditions
+  in
+  let q = Scanf.scanf &quot; %d&quot; (fun q -&gt; q) in
+  let qrys =
+    List.init q ~f:(fun _ -&gt;
+      Scanf.scanf &quot; %d %d&quot; (fun u v -&gt; {u; v}))
+    |&gt; List.rev
+  in
+  let ans = List.map qrys ~f:(fun {u; v} -&gt;
+      if always_bad then &quot;No&quot;
+      else
+        let u = Dsu.find dsu u in
+        let v = Dsu.find dsu v in
+        if Set.mem condition_set {u; v} ||
+          Set.mem condition_set {u = v; v = u}
+        then &quot;No&quot; else &quot;Yes&quot;
+    ) in
+  List.iter ans ~f:(fun s -&gt; print_endline s)</code></pre>
+<h1>手工改進：讓數據結構表達問題</h1>
+<p><code>main.ml</code> 做了幾項關鍵調整：並查集加入按秩合併；輸入和輸出改成 <code>for</code> 循環；禁配關係改用 <code>Hash_set</code>；<code>OrderPair.create</code> 在入口處統一兩個根的順序。</p>
+<p><code>[@@deriving compare, sexp, hash]</code> 會爲自定義類型生成容器所需的比較、序列化和哈希函數。這裏不必手寫容易出錯的樣板代碼，也能直接把模塊交給 Core 的集合接口。</p>
+<p>整數比較也改爲 <code>Ordering.of_int (Int.compare ...)</code> 後匹配 Less、Equal 和 Greater，避免依賴多態比較，並讓三個分支的意圖更明確。</p>
+<pre><code class="language-ocaml">open Core
+
+let read_int () = Scanf.scanf &quot; %d&quot; (fun x -&gt; x)
+let read_pair_int() = Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; (x, y))
+
+module type DSU = sig
+  type t
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end
+module Dsu : DSU = struct
+  type t = {
+    fa   : int Array.t;
+    height : int Array.t; 
+  }
+  let create n =
+    {
+      fa = Array.init n ~f:Fn.id;
+      height = Array.init n ~f:(Fn.const 1);
+    }
+  let rec find t a = 
+    if Int.equal t.fa.(a) a then a 
+    else 
+      let root = find t t.fa.(a) in (
+        t.fa.(a) &lt;- root;
+        root
+      )
+  let union t a b = 
+    let root_a = find t a in
+    let root_b = find t b in
+    if Int.equal root_a root_b then ()
+    else 
+      let ht_a = t.height.(root_a) in
+      let ht_b = t.height.(root_b) in
+      match Ordering.of_int (Int.compare ht_a ht_b ) with
+      | Less -&gt; (t.fa.(root_a) &lt;- root_b)
+      | Greater -&gt; (t.fa.(root_b) &lt;- root_a)
+      | Equal -&gt; (t.fa.(root_b) &lt;- root_a; t.height.(root_a) &lt;- ht_a + 1)
+end
+
+module OrderPair = struct
+  type t = {
+    lo : int;
+    hi : int;
+  }
+  [@@deriving compare, sexp, hash]
+  let create a b =
+    match Ordering.of_int (Int.compare a b) with
+    | Less | Equal -&gt; {lo = a; hi = b}
+    | Greater -&gt; {lo = b; hi = a}
+end
+
+let () = 
+  let n, m = read_pair_int() in
+  let dsu = Dsu.create (n+1) in 
+  for _ = 1 to m do 
+    let (a, b) = read_pair_int() in
+    Dsu.union dsu a b
+  done;
+  let k = read_int() in
+  let ban_set = Hash_set.create ~size:k (module OrderPair) in
+  for _ = 1 to k do
+    let (a, b) = read_pair_int() in
+    let rt_a = Dsu.find dsu a in
+    let rt_b = Dsu.find dsu b in 
+    Hash_set.add ban_set (OrderPair.create rt_a rt_b)
+  done;
+  let q = read_int() in
+  for _ = 1 to q do
+    let (u, v) = read_pair_int() in
+    let u = Dsu.find dsu u in
+    let v = Dsu.find dsu v in
+    if Hash_set.mem ban_set (OrderPair.create u v)
+    then print_endline &quot;No&quot; else print_endline &quot;Yes&quot;
+  done</code></pre>
+<h1>最終整理：語義命名與封裝</h1>
+<p><code>gpt_optimize.ml</code> 沒有改變算法，而是讓實現更接近它表達的模型。</p>
+<ul>
+<li>parent 和 rank 比 fa 和 height 更直接；Component_pair 和 forbidden 也比泛化的 pair 與 ban_set 更貼近題意。</li>
+<li><code>component_pair_of_vertices</code> 集中完成“查根並規範化”這一步，錄入限制和回答詢問不會各自重複邏輯。</li>
+<li>Dsu 與 Component_pair 都公開最小接口，內部數組和記錄表示不會泄漏到調用處。</li>
+<li><code>Array.create</code> 清楚地表達 rank 數組以零初始化，<code>Fn.id</code> 則讓單整數讀入保持簡短。</li>
+</ul>
+<p>在編輯器裏一次寫下帶簽名約束的模塊時，尚未完成的實現可能暫時觸發很多類型錯誤。學習階段可以先定義 module type，再完成模塊，最後補上約束；較大的項目則更適合把公共接口放進 mli。不過對這篇單文件競賽代碼，最終的內聯簽名足夠緊湊，也能保留清晰的抽象邊界。</p>
+<pre><code class="language-ocaml">open Core
+
+let read_int () =
+  Scanf.scanf &quot; %d&quot; Fn.id
+
+let read_int_pair () =
+  Scanf.scanf &quot; %d %d&quot; (fun a b -&gt; a, b)
+
+module Dsu : sig
+  type t
+
+  val create : int -&gt; t
+  val find : t -&gt; int -&gt; int
+  val union : t -&gt; int -&gt; int -&gt; unit
+end = struct
+  type t =
+    { parent : int array
+    ; rank : int array
+    }
+
+  let create n =
+    { parent = Array.init n ~f:Fn.id
+    ; rank = Array.create ~len:n 0
+    }
+
+  let rec find t x =
+    if Int.equal t.parent.(x) x
+    then x
+    else (
+      let root = find t t.parent.(x) in
+      t.parent.(x) &lt;- root;
+      root)
+
+  let union t a b =
+    let root_a = find t a in
+    let root_b = find t b in
+    if not (Int.equal root_a root_b)
+    then (
+      let rank_a = t.rank.(root_a) in
+      let rank_b = t.rank.(root_b) in
+      match Ordering.of_int (Int.compare rank_a rank_b) with
+      | Less -&gt;
+        t.parent.(root_a) &lt;- root_b
+      | Greater -&gt;
+        t.parent.(root_b) &lt;- root_a
+      | Equal -&gt;
+        t.parent.(root_b) &lt;- root_a;
+        t.rank.(root_a) &lt;- rank_a + 1)
+end
+
+module Component_pair : sig
+  type t
+  [@@deriving compare, sexp, hash]
+
+  val create : int -&gt; int -&gt; t
+end = struct
+  type t =
+    { smaller : int
+    ; larger : int
+    }
+  [@@deriving compare, sexp, hash]
+
+  let create a b =
+    match Ordering.of_int (Int.compare a b) with
+    | Less | Equal -&gt; { smaller = a; larger = b }
+    | Greater -&gt; { smaller = b; larger = a }
+end
+
+let component_pair_of_vertices dsu a b =
+  Component_pair.create
+    (Dsu.find dsu a)
+    (Dsu.find dsu b)
+
+let () =
+  let n, m = read_int_pair () in
+  let dsu = Dsu.create (n + 1) in
+
+  for _ = 1 to m do
+    let a, b = read_int_pair () in
+    Dsu.union dsu a b
+  done;
+
+  let k = read_int () in
+  let forbidden =
+    Hash_set.create ~size:k (module Component_pair)
+  in
+
+  for _ = 1 to k do
+    let a, b = read_int_pair () in
+    Hash_set.add forbidden
+      (component_pair_of_vertices dsu a b)
+  done;
+
+  let q = read_int () in
+  for _ = 1 to q do
+    let u, v = read_int_pair () in
+    let pair =
+      component_pair_of_vertices dsu u v
+    in
+    print_endline
+      (if Hash_set.mem forbidden pair
+       then &quot;No&quot;
+       else &quot;Yes&quot;)
+  done</code></pre>
+<h1>小結</h1>
+<p>這次改進的重點不是換一個更復雜的算法，而是讓代碼中的表示與題目中的概念一致：頂點先歸入分量，受限關係存爲規範化的分量無序對，每次詢問只做兩次查根和一次哈希查詢。</p>
+<p>同樣重要的是把副作用寫得明確，把比較限定在具體類型上，並讓模塊只暴露調用者需要的操作。三版代碼放在一起看，算法幾乎沒有變化，但最終實現的控制流、命名和邊界都更容易讀懂。</p>

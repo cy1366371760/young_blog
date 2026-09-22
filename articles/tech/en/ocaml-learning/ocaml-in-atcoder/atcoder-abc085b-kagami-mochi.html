@@ -1,0 +1,45 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: ABC085B - Kagami Mochi</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/abc085_b?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>Given <code>N</code> round mochi with integer diameters, build the tallest stack in which every mochi above another has a strictly smaller diameter. Find the maximum number of layers.</p>
+<h2>Idea</h2>
+<p>Every distinct diameter can appear once in a valid stack, while duplicate diameters cannot both be used. The answer is therefore the number of distinct diameters.</p>
+<p>This solution sorts the list with a recursive quicksort, then scans the sorted result and counts changes between adjacent values.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Read the <code>N</code> diameters.</li>
+<li>Sort them with quicksort.</li>
+<li>Traverse the sorted list and count each new value once.</li>
+<li>Print that count.</li>
+</ul>
+<p>With random pivots, the quicksort has expected <code>O(N log N)</code> time. The counting pass is <code>O(N)</code>, and the list-based implementation uses additional memory for the sorted and partitioned lists.</p>
+<h2>Reflection</h2>
+<p>For integers, <code>Int.compare</code> and <code>Int.equal</code> make the intended type-specific comparison explicit. Polymorphic comparison operators such as <code>&lt;</code> and <code>=</code> are also correct for integers, but the <code>Core</code> helpers are a clearer habit. The current <code>count_unique</code> implementation still uses <code>=</code>; using <code>Int.equal</code> there would make the style consistent.</p>
+<p>The quicksort can partition more efficiently by matching <code>pivot :: rest</code> and using one <code>List.fold</code> to produce the less-than, equal-to, and greater-than lists. This replaces the current three <code>List.filter</code> passes. It is not an alternative to the <code>List</code> library: pattern matching exposes the head and tail, while <code>List.fold</code> performs the single traversal.</p>
+<p>In the distinct-counting recursion, an alias pattern such as <code>x :: ((y :: _) as tail)</code> can reuse <code>tail</code> instead of reconstructing <code>y :: rem</code> after each comparison. With the explicit integer comparison, the compact shape is <code>if Int.equal x y then count_unique tail else 1 + count_unique tail</code>.</p>
+<p>For this problem, whose input size is at most <code>100</code>, the current implementation is already comfortably fast. <code>List.dedup_and_sort ~compare:Int.compare</code> would be the most direct <code>Core</code> library solution once the underlying operations are familiar.</p>
+<h2>OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let rec qsort a =
+  let n = List.length a in
+  if n &lt;= 1 then a else
+    let pos = Random.int n in
+    let bas = List.nth_exn a pos in
+    qsort (List.filter a ~f:(fun x -&gt; Int.compare x bas &lt; 0)) @
+    (List.filter a ~f:(fun x -&gt; Int.equal x bas)) @
+    qsort (List.filter a ~f:(fun x -&gt; Int.compare x bas &gt; 0))
+
+let () =
+  let n = Scanf.scanf &quot; %d&quot; (fun x -&gt; x) in
+  let d = List.init n ~f:(fun _ -&gt; Scanf.scanf &quot; %d&quot; (fun x -&gt; x)) in
+  let sorted_d = qsort d in
+  let rec count_unique = function
+  | [] -&gt; 0
+  | [_] -&gt; 1
+  | x :: y :: rem -&gt; if x = y then count_unique (y :: rem) else 1 + count_unique (y :: rem) in
+  let res = count_unique sorted_d in
+  printf &quot;%d\n&quot; res</code></pre>

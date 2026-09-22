@@ -1,0 +1,26 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginners Selection</li>
+<li>題目：ABC081A - Placing Marbles</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abs/tasks/abc081_a?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>輸入是一個由三個 <code>0</code> 或 <code>1</code> 組成的字符串。統計其中有多少個位置是 <code>1</code>。</p>
+<h2>思路</h2>
+<p>輸入本身已經是字符串，因此只需掃描其中的字符，並統計等於 <code>&#39;1&#39;</code> 的字符數量。<code>String.count</code> 可以直接表達這個任務。</p>
+<h2>算法</h2>
+<ul>
+<li>讀取二進制字符串。</li>
+<li>統計等於 <code>&#39;1&#39;</code> 的字符。</li>
+<li>輸出計數。</li>
+</ul>
+<p>時間複雜度是 <code>O(|s|)</code>，額外空間爲常數。這裏 <code>|s| = 3</code>。</p>
+<h2>反思</h2>
+<p>這裏需要使用 <code>Scanf.scanf</code>，因爲它是格式化輸入解析器：它接收一個格式字符串，以及一個消費解析結果的延續函數。相比之下，在打開 <code>Core</code> 後，可以直接使用 <code>printf</code> 進行格式化輸出。</p>
+<p><code>let () = ...</code> 中的模式要求右側表達式產生 <code>unit</code>。因此，對於主要作用是執行輸入輸出效果的程序，它很適合作爲頂層入口。</p>
+<h2>OCaml 實現</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%s&quot; (fun s -&gt;
+    printf &quot;%d\n&quot; (String.count s ~f:(Char.equal &#39;1&#39;))
+  )</code></pre>

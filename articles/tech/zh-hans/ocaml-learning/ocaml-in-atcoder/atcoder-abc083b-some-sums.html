@@ -1,0 +1,40 @@
+<h1>问题</h1>
+<ul>
+<li>平台：AtCoder Beginners Selection</li>
+<li>题目：ABC083B - Some Sums</li>
+<li>链接：<a href="https://atcoder.jp/contests/abs/tasks/abc083_b?lang=en">AtCoder 题目说明</a></li>
+</ul>
+<p>对于从 <code>1</code> 到 <code>N</code> 的每个整数，如果它的十进制各位数字之和位于 <code>A</code> 与 <code>B</code> 之间（包含两端），就把它加入答案。</p>
+<h2>思路</h2>
+<p><code>N</code> 的约束足够小，可以检查每个候选数。把候选数转换成字符串，将其中的数字字符相加，再把满足条件的候选数折叠到最终总和中。</p>
+<h2>算法</h2>
+<ul>
+<li>从第一行输入解析 <code>N</code>、<code>A</code> 和 <code>B</code>。</li>
+<li>对 <code>1 .. N</code> 中的每个整数，计算它的十进制各位数字之和。</li>
+<li>仅当这个和位于 <code>[A, B]</code> 时，才把该整数加入累加器。</li>
+</ul>
+<p>由于需要处理每个候选数的十进制数字，时间复杂度是 <code>O(N log N)</code>。<code>List.range</code> 会把候选数具体化，因此这个实现使用 <code>O(N)</code> 的额外空间。</p>
+<h2>反思</h2>
+<p>把数字转换为字符串并遍历字符，表达清晰，也完全足以应对这里的约束。另一种做法是使用算术方式反复取末位数字，这样可以避免临时字符串分配。</p>
+<p>对拆分后的输入行进行模式匹配很明确，但可能显得冗长。面对更通用的竞赛输入，值得编写一个小型的空白标记读取器。对于简单的固定格式，<code>Scanf</code> 也很方便。</p>
+<p><code>List.fold (List.range 1 (n + 1))</code> 避免了带可变累加器的 <code>for</code> 循环，但中间列表会占用空间。这里的代价无关紧要，不过注意到这种权衡是一个好习惯。</p>
+<p><code>function</code> 是 <code>fun x -&gt; match x with ...</code> 的简写：其中的 <code>x</code> 是一个新的函数参数，并不是外围作用域中的已有变量。</p>
+<h2>OCaml 实现</h2>
+<pre><code class="language-ocaml">open Core
+
+let count_sum_digits x = x
+ |&gt; Int.to_string
+ |&gt; String.fold ~init:0 ~f:(fun acc c -&gt; acc + Char.to_int c - Char.to_int &#39;0&#39;)
+
+let () =
+  let n, a, b = In_channel.input_line_exn In_channel.stdin
+  |&gt; String.split ~on:&#39; &#39;
+  |&gt; function
+  | [n; a; b] -&gt; Int.of_string n, Int.of_string a, Int.of_string b
+  | _ -&gt; failwith &quot;gg&quot;
+  in
+  let ans = List.fold (List.range 1 (n+1)) ~init:0 ~f:(fun acc x -&gt;
+    let digit_sum = count_sum_digits x in
+    if a &lt;= digit_sum &amp;&amp; digit_sum &lt;= b then acc + x
+    else acc) in
+  printf &quot;%d\n&quot; ans</code></pre>

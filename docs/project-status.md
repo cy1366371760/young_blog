@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-09-21.
+Last updated: 2026-09-22.
 
 ## Current State
 
@@ -58,7 +58,10 @@ static-only and should contain only browser assets such as `index.html`,
 - Markdown frontmatter to generated post index.
 - Generated article HTML assets.
 - URL-driven article detail pages.
-- URL-driven category and subcategory index pages.
+- URL-driven category and subcategory filters in a right-hand navigation panel,
+  with articles displayed directly in the main column.
+- Cutoff-backed Bonsai derivations for content-area/locale visibility and
+  route-specific article filtering.
 - Bonsai article loading state machine for article body fetches.
 - Cloudflare Pages SPA fallback file.
 - OCaml in AtCoder content framework, starter note, and seven beginner-problem
@@ -68,9 +71,8 @@ static-only and should contain only browser assets such as `index.html`,
 
 1. Configure Cloudflare Pages to serve the `deploy` branch and honor `_redirects`.
 2. Review the initial article translations for tone and terminology.
-3. Add Bonsai state for query, tags, category, and subcategory filters.
-4. Replace the illustrative Incremental trace panel with real state-driven
-   highlights.
+3. Add Bonsai state for query and tag filters.
+4. Add optional instrumentation for inspecting real Incremental recomputation.
 5. Add a small smoke test script for generated assets.
 
 ## Known Risks

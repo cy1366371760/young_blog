@@ -32,6 +32,10 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Changed
 
+- Displayed article lists directly in the main column and moved category and
+  subcategory selection into a persistent right-hand navigation panel.
+- Derived locale, content-area, and route filters through separate Bonsai
+  incremental values so navigation changes only recompute affected lists.
 - Moved source content under `content/<area>/<locale>/...`.
 - Updated the content generator and new-post helper for locale-aware content.
 - Kept one Chinese source per article by deriving Traditional Chinese at build

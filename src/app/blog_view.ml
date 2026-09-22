@@ -66,48 +66,6 @@ let posts_in_subcategory posts category subcategory =
     String.equal post.category category && String.equal post.subcategory subcategory)
 ;;
 
-let category_card ~set_route ~(context : Route.context) ~posts category =
-  let category_posts = posts_in_category posts category in
-  let note_count = List.length category_posts in
-  let subcategory_count =
-    List.map category_posts ~f:(fun (post : Post.t) -> post.subcategory)
-    |> unique_sorted
-    |> List.length
-  in
-  let area = context.area in
-  let locale = context.locale in
-  Node.create
-    "article"
-    ~attrs:[ Attr.class_ "browse-card" ]
-    [ nav_link
-        ~classes:(Attr.class_ "browse-card-title")
-        ~set_route
-        (Route.Category { area; locale; category })
-        (Copy.path_segment_label locale category)
-    ; Node.div
-        ~attrs:[ Attr.class_ "browse-card-meta" ]
-        [ text (Copy.subcategories_and_notes locale ~subcategory_count ~note_count) ]
-    ]
-;;
-
-let subcategory_card ~set_route ~(context : Route.context) ~category ~posts subcategory =
-  let note_count = List.length (posts_in_subcategory posts category subcategory) in
-  let area = context.area in
-  let locale = context.locale in
-  Node.create
-    "article"
-    ~attrs:[ Attr.class_ "browse-card" ]
-    [ nav_link
-        ~classes:(Attr.class_ "browse-card-title")
-        ~set_route
-        (Route.Subcategory { area; locale; category; subcategory })
-        (Copy.path_segment_label locale subcategory)
-    ; Node.div
-        ~attrs:[ Attr.class_ "browse-card-meta" ]
-        [ text (Copy.notes_count locale note_count) ]
-    ]
-;;
-
 let post_card ~set_route (post : Post.t) =
   Node.create
     "article"
@@ -123,60 +81,94 @@ let post_card ~set_route (post : Post.t) =
     ]
 ;;
 
-let graph_node ~status label =
-  Node.div ~attrs:[ classes [ "graph-node"; status ] ] [ text label ]
+let route_selects_category route category =
+  match route with
+  | Route.Category selected -> String.equal selected.category category
+  | Subcategory selected -> String.equal selected.category category
+  | Article selected -> String.equal selected.category category
+  | Index _ -> false
 ;;
 
-let incremental_panel ~route ~article =
+let route_selects_subcategory route category subcategory =
+  match route with
+  | Route.Subcategory selected ->
+    String.equal selected.category category
+    && String.equal selected.subcategory subcategory
+  | Article selected ->
+    String.equal selected.category category
+    && String.equal selected.subcategory subcategory
+  | Index _ | Category _ -> false
+;;
+
+let category_navigation ~route ~set_route ~posts =
   let context = Route.context route in
   let area = context.area in
   let locale = context.locale in
   let copy = Copy.for_locale locale in
-  let route_status =
-    match route with
-    | Route.Index _ -> "index"
-    | Route.Category _ -> "category"
-    | Route.Subcategory _ -> "subcategory"
-    | Route.Article _ -> "article"
-  in
-  let load_status =
-    match article with
-    | Article_loader.No_article -> "idle"
-    | Article_loader.Loading -> "loading"
-    | Article_loader.Loaded _ -> "loaded"
-    | Article_loader.Failed _ -> "failed"
+  let categories =
+    List.map posts ~f:(fun (post : Post.t) -> post.category) |> unique_sorted
   in
   Node.create
     "aside"
-    ~attrs:[ Attr.class_ "side-panel" ]
-    [ Node.h2 [ text copy.incremental_trace ]
+    ~attrs:[ Attr.class_ "category-navigation" ]
+    [ Node.h2 [ text copy.browse ]
+    ; nav_link
+        ~classes:
+          (classes
+             [ "category-navigation-all"
+             ; (match route with
+                | Route.Index _ -> "is-active"
+                | Category _ | Subcategory _ | Article _ -> "")
+             ])
+        ~set_route
+        (Route.Index context)
+        [%string "%{copy.all_articles} · %{List.length posts#Int}"]
     ; Node.div
-        ~attrs:[ Attr.class_ "graph-grid" ]
-        [ graph_node ~status:"is-cold" (Copy.trace_node_label locale "all-posts")
-        ; graph_node ~status:"is-hot" (Copy.area_label locale area)
-        ; graph_node ~status:"is-warm" (Copy.trace_node_label locale route_status)
-        ; graph_node ~status:"is-hot" (Copy.trace_node_label locale "filter")
-        ; graph_node ~status:"is-warm" (Copy.trace_node_label locale "sort")
-        ; graph_node ~status:"is-hot" (Copy.trace_node_label locale load_status)
-        ]
-    ; Node.div ~attrs:[ Attr.class_ "comments-slot" ] [ text copy.comments_boundary ]
+        ~attrs:[ Attr.class_ "category-navigation-groups" ]
+        (List.map categories ~f:(fun category ->
+           let category_posts = posts_in_category posts category in
+           let subcategories =
+             List.map category_posts ~f:(fun (post : Post.t) -> post.subcategory)
+             |> unique_sorted
+           in
+           Node.section
+             ~attrs:[ Attr.class_ "category-navigation-group" ]
+             [ nav_link
+                 ~classes:
+                   (classes
+                      [ "category-navigation-primary"
+                      ; (if route_selects_category route category then "is-active" else "")
+                      ])
+                 ~set_route
+                 (Route.Category { area; locale; category })
+                 [%string
+                   "%{Copy.path_segment_label locale category} · %{List.length \
+                    category_posts#Int}"]
+             ; Node.div
+                 ~attrs:[ Attr.class_ "category-navigation-secondary" ]
+                 (List.map subcategories ~f:(fun subcategory ->
+                    let note_count =
+                      List.length (posts_in_subcategory posts category subcategory)
+                    in
+                    nav_link
+                      ~classes:
+                        (classes
+                           [ "category-navigation-link"
+                           ; (if route_selects_subcategory route category subcategory
+                              then "is-active"
+                              else "")
+                           ])
+                      ~set_route
+                      (Route.Subcategory { area; locale; category; subcategory })
+                      [%string
+                        "%{Copy.path_segment_label locale subcategory} · \
+                         %{note_count#Int}"]))
+             ]))
     ]
 ;;
 
 let back_link ~set_route route label =
   nav_link ~classes:(Attr.class_ "back-link") ~set_route route label
-;;
-
-let section_header (context : Route.context) =
-  let area = context.area in
-  let locale = context.locale in
-  let copy = Copy.for_locale locale in
-  Node.div
-    ~attrs:[ Attr.class_ "section-header" ]
-    [ Node.div ~attrs:[ Attr.class_ "section-kicker" ] [ text copy.library ]
-    ; Node.h1 [ text (Copy.area_label locale area) ]
-    ; Node.p [ text (Copy.area_description locale area) ]
-    ]
 ;;
 
 let article_header ~set_route (article : Route.article) post =
@@ -225,61 +217,45 @@ let article_body ~locale ~article_exists article =
         ())
 ;;
 
-let category_page ~set_route ~(context : Route.context) ~posts category =
-  let area = context.area in
+let article_list_header ~(context : Route.context) route note_count =
   let locale = context.locale in
   let copy = Copy.for_locale locale in
-  let subcategories =
-    posts_in_category posts category
-    |> List.map ~f:(fun (post : Post.t) -> post.subcategory)
-    |> unique_sorted
+  let kicker, title, description =
+    match route with
+    | Route.Index _ ->
+      ( copy.library
+      , Copy.area_label locale context.area
+      , Copy.area_description locale context.area )
+    | Category { category; _ } ->
+      copy.category, Copy.path_segment_label locale category, copy.browse_topic
+    | Subcategory { category; subcategory; _ } ->
+      ( Copy.path_segment_label locale category
+      , Copy.path_segment_label locale subcategory
+      , copy.browse_topic )
+    | Article _ -> assert false
   in
-  Node.section
-    ~attrs:[ Attr.class_ "main-copy" ]
-    [ back_link
-        ~set_route
-        (Route.Index context)
-        [%string "%{copy.back_to} %{Copy.area_label locale area}"]
+  Node.div
+    ~attrs:[ Attr.class_ "section-header" ]
+    [ Node.div ~attrs:[ Attr.class_ "section-kicker" ] [ text kicker ]
+    ; Node.h1 [ text title ]
+    ; Node.p [ text description ]
     ; Node.div
-        ~attrs:[ Attr.class_ "section-header" ]
-        [ Node.div ~attrs:[ Attr.class_ "section-kicker" ] [ text copy.category ]
-        ; Node.h1 [ text (Copy.path_segment_label locale category) ]
-        ; Node.p [ text copy.choose_topic ]
-        ]
-    ; Node.div
-        ~attrs:[ Attr.class_ "browse-list" ]
-        (List.map
-           subcategories
-           ~f:(subcategory_card ~set_route ~context ~category ~posts))
+        ~attrs:[ Attr.class_ "result-count" ]
+        [ text (Copy.notes_count locale note_count) ]
     ]
 ;;
 
-let subcategory_page ~set_route ~(context : Route.context) ~posts ~category ~subcategory =
-  let area = context.area in
-  let locale = context.locale in
-  let copy = Copy.for_locale locale in
-  let notes = posts_in_subcategory posts category subcategory in
+let article_list_page ~set_route ~(context : Route.context) ~route ~posts =
   Node.section
     ~attrs:[ Attr.class_ "main-copy" ]
-    [ back_link
-        ~set_route
-        (Route.Category { area; locale; category })
-        [%string "%{copy.back_to} %{Copy.path_segment_label locale category}"]
-    ; Node.div
-        ~attrs:[ Attr.class_ "section-header" ]
-        [ Node.div
-            ~attrs:[ Attr.class_ "section-kicker" ]
-            [ text (Copy.path_segment_label locale category) ]
-        ; Node.h1 [ text (Copy.path_segment_label locale subcategory) ]
-        ; Node.p [ text copy.browse_topic ]
-        ]
+    [ article_list_header ~context route (List.length posts)
     ; Node.div
         ~attrs:[ Attr.class_ "article-list" ]
-        (List.map notes ~f:(post_card ~set_route))
+        (List.map posts ~f:(post_card ~set_route))
     ]
 ;;
 
-let page ~route ~set_route ~posts ~all_posts ~article =
+let page ~route ~set_route ~posts ~navigation_posts ~all_posts ~article =
   let context = Route.context route in
   let article_exists =
     match route with
@@ -303,23 +279,8 @@ let page ~route ~set_route ~posts ~all_posts ~article =
     ; Node.main
         ~attrs:[ Attr.class_ "page-grid" ]
         [ (match route with
-           | Route.Index _ ->
-             let categories =
-               posts
-               |> List.map ~f:(fun (post : Post.t) -> post.category)
-               |> unique_sorted
-             in
-             Node.section
-               ~attrs:[ Attr.class_ "main-copy" ]
-               [ section_header context
-               ; Node.div
-                   ~attrs:[ Attr.class_ "browse-list" ]
-                   (List.map categories ~f:(category_card ~set_route ~context ~posts))
-               ]
-           | Route.Category { category; _ } ->
-             category_page ~set_route ~context ~posts category
-           | Route.Subcategory { category; subcategory; _ } ->
-             subcategory_page ~set_route ~context ~posts ~category ~subcategory
+           | Route.Index _ | Category _ | Subcategory _ ->
+             article_list_page ~set_route ~context ~route ~posts
            | Route.Article article_route ->
              let post =
                List.find posts ~f:(fun post ->
@@ -330,8 +291,11 @@ let page ~route ~set_route ~posts ~all_posts ~article =
                ~attrs:[ Attr.class_ "article-page" ]
                [ article_header ~set_route article_route post
                ; article_body ~locale:context.locale ~article_exists article
+               ; Node.div
+                   ~attrs:[ Attr.class_ "comments-slot" ]
+                   [ text (Copy.for_locale context.locale).comments_boundary ]
                ])
-        ; incremental_panel ~route ~article
+        ; category_navigation ~route ~set_route ~posts:navigation_posts
         ]
     ]
 ;;

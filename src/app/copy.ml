@@ -5,12 +5,12 @@ type t =
   ; essays : string
   ; library : string
   ; category : string
-  ; choose_topic : string
+  ; browse : string
+  ; all_articles : string
   ; browse_topic : string
   ; back_to : string
   ; loading_article : string
   ; article_unavailable : string
-  ; incremental_trace : string
   ; comments_boundary : string
   }
 
@@ -20,12 +20,12 @@ let for_locale = function
     ; essays = "Essays"
     ; library = "Library"
     ; category = "Category"
-    ; choose_topic = "Choose a topic to see its notes."
+    ; browse = "Browse"
+    ; all_articles = "All articles"
     ; browse_topic = "Browse notes in this topic."
     ; back_to = "Back to"
     ; loading_article = "Loading article..."
     ; article_unavailable = "This article is not yet available in the selected language."
-    ; incremental_trace = "Incremental Trace"
     ; comments_boundary =
         "Comments boundary reserved: article id, provider adapter, moderation state."
     }
@@ -34,12 +34,12 @@ let for_locale = function
     ; essays = "随笔"
     ; library = "文章库"
     ; category = "分类"
-    ; choose_topic = "选择一个主题查看文章。"
+    ; browse = "浏览文章"
+    ; all_articles = "全部文章"
     ; browse_topic = "浏览这个主题下的文章。"
     ; back_to = "返回"
     ; loading_article = "正在加载文章…"
     ; article_unavailable = "这篇文章尚未提供所选语言的版本。"
-    ; incremental_trace = "增量计算轨迹"
     ; comments_boundary = "评论区预留：文章 ID、服务提供方适配器与审核状态。"
     }
   | Locale.Zh_hant ->
@@ -47,12 +47,12 @@ let for_locale = function
     ; essays = "隨筆"
     ; library = "文章庫"
     ; category = "分類"
-    ; choose_topic = "選擇一個主題查看文章。"
+    ; browse = "瀏覽文章"
+    ; all_articles = "全部文章"
     ; browse_topic = "瀏覽這個主題下的文章。"
     ; back_to = "返回"
     ; loading_article = "正在載入文章…"
     ; article_unavailable = "這篇文章尚未提供所選語言的版本。"
-    ; incremental_trace = "增量計算軌跡"
     ; comments_boundary = "評論區預留：文章 ID、服務提供方適配器與審核狀態。"
     }
 ;;
@@ -102,46 +102,9 @@ let path_segment_label locale = function
   | segment -> String.substr_replace_all segment ~pattern:"-" ~with_:" "
 ;;
 
-let trace_node_label locale node =
-  match locale, node with
-  | Locale.En, "all-posts" -> "all posts"
-  | Locale.En, _ -> node
-  | Locale.Zh_hans, "all-posts" -> "全部文章"
-  | Locale.Zh_hans, "index" -> "首页"
-  | Locale.Zh_hans, "category" -> "分类"
-  | Locale.Zh_hans, "subcategory" -> "子分类"
-  | Locale.Zh_hans, "article" -> "文章"
-  | Locale.Zh_hans, "filter" -> "筛选"
-  | Locale.Zh_hans, "sort" -> "排序"
-  | Locale.Zh_hans, "idle" -> "空闲"
-  | Locale.Zh_hans, "loading" -> "加载中"
-  | Locale.Zh_hans, "loaded" -> "已加载"
-  | Locale.Zh_hans, "failed" -> "失败"
-  | Locale.Zh_hant, "all-posts" -> "全部文章"
-  | Locale.Zh_hant, "index" -> "首頁"
-  | Locale.Zh_hant, "category" -> "分類"
-  | Locale.Zh_hant, "subcategory" -> "子分類"
-  | Locale.Zh_hant, "article" -> "文章"
-  | Locale.Zh_hant, "filter" -> "篩選"
-  | Locale.Zh_hant, "sort" -> "排序"
-  | Locale.Zh_hant, "idle" -> "閒置"
-  | Locale.Zh_hant, "loading" -> "載入中"
-  | Locale.Zh_hant, "loaded" -> "已載入"
-  | Locale.Zh_hant, "failed" -> "失敗"
-  | (Locale.Zh_hans | Locale.Zh_hant), _ -> node
-;;
-
 let notes_count locale count =
   match locale with
   | Locale.En -> [%string "%{count#Int} notes"]
   | Locale.Zh_hans -> [%string "%{count#Int} 篇文章"]
   | Locale.Zh_hant -> [%string "%{count#Int} 篇文章"]
-;;
-
-let subcategories_and_notes locale ~subcategory_count ~note_count =
-  match locale with
-  | Locale.En ->
-    [%string "%{subcategory_count#Int} subcategories · %{note_count#Int} notes"]
-  | Locale.Zh_hans -> [%string "%{subcategory_count#Int} 个子分类 · %{note_count#Int} 篇文章"]
-  | Locale.Zh_hant -> [%string "%{subcategory_count#Int} 個子分類 · %{note_count#Int} 篇文章"]
 ;;

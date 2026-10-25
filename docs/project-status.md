@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-09-22.
+Last updated: 2026-10-26.
 
 ## Current State
 
@@ -13,11 +13,20 @@ The English technical area now has an `ocaml-learning` category with an
 `ocaml-in-atcoder` subcategory for AtCoder examples, OCaml solutions, and
 problem-solving reflections.
 
+The Essays / Notes / Daily section now includes a Chinese-first personal diary.
+The diary helper keeps unfinished translations outside published content, then
+prepares and validates the paired sources. After editorial review, it can
+create and merge a focused PR, wait for deployment workflows, and verify the
+English, Simplified Chinese, and Traditional Chinese assets on `deploy`.
+Translation remains manual or assisted by Codex. See `diary-workflow.md`.
+
 The repository is connected to GitHub at:
 
 ```text
 https://github.com/cy1366371760/young_blog
 ```
+
+The production site is available at `https://young-blog.pages.dev`.
 
 Cloudflare Pages should deploy from the `deploy` branch. The `deploy` branch is
 static-only and should contain only browser assets such as `index.html`,

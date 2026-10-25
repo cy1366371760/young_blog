@@ -7,6 +7,11 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Added
 
+- Added the first Chinese-first diary and its English translation under
+  Essays / Notes / Daily, with a generated Traditional Chinese variant.
+- Added a diary helper for unpublished drafts, paired-source preparation,
+  validation, PR creation, protected merging, and deploy-branch verification.
+- Added diary workflow documentation and failure-path tests for the helper.
 - Added independent content-area and locale route dimensions.
 - Added English, Simplified Chinese, and Traditional Chinese UI localization.
 - Added locale-aware article asset paths and an unavailable-translation state.

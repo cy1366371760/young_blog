@@ -115,6 +115,10 @@ review file in the PR only when the user asks to preserve it in the repository.
 4. Keep all code byte-for-byte identical in both files.
 5. Run the validation commands below.
 
+For a Chinese-first diary, follow `docs/diary-workflow.md`. The helper keeps
+unfinished translations in the unpublished inbox and can run the PR, merge,
+and deployment verification steps after both sources have been reviewed.
+
 ## Edit An Article
 
 1. Locate every source with its `translation_key`.

@@ -54,6 +54,10 @@ translates the finished article into the other maintained language.
 For content-only edits, this should be a fast deploy path: no opam switch, no
 Dune rebuild, and no js_of_ocaml compilation.
 
+Chinese-first diaries use the existing `essays/notes/daily` section. See
+`diary-workflow.md` for the semi-automatic drafting, translation, PR, merge,
+and deployment helper. Translation remains an editorial step.
+
 ## Article URLs
 
 Generated article URLs follow the content hierarchy:

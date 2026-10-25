@@ -23,3 +23,8 @@ The complete AI article workflow is documented in
 `docs/agent-content-workflow.md`.
 Current status is tracked in `docs/project-status.md`, and durable architecture
 decisions live under `docs/adr/`.
+
+For Chinese-first diaries, use `node scripts/diary.mjs --help` and follow
+`docs/diary-workflow.md`. The helper prepares paired sources, validates all
+three variants, and can create a PR, merge it, and verify deployment after
+editorial review and translation.

@@ -4,5 +4,6 @@ dist/
 public/articles/
 public/posts.js
 node_modules/
+content/inbox/diary/
 
 *.install

@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-10-26.
+Last updated: 2026-10-28.
 
 ## Current State
 
@@ -12,6 +12,10 @@ future comments boundary.
 The English technical area now has an `ocaml-learning` category with an
 `ocaml-in-atcoder` subcategory for AtCoder examples, OCaml solutions, and
 problem-solving reflections.
+
+The `ocaml-learning/jane-street-video-notes` section now starts a bilingual
+series on older Jane Street talks with Why OCaml, its Boolean evaluator, and
+reflections on type polymorphism and configurable interpretation rules.
 
 The Essays / Notes / Daily section now includes a Chinese-first personal diary.
 The diary helper keeps unfinished translations outside published content, then

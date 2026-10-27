@@ -7,6 +7,9 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Added
 
+- Added bilingual Jane Street video notes beginning with Why OCaml, including
+  the Boolean evaluator transcription and examples of parameterized interpretation.
+
 - Added the first Chinese-first diary and its English translation under
   Essays / Notes / Daily, with a generated Traditional Chinese variant.
 - Added a diary helper for unpublished drafts, paired-source preparation,

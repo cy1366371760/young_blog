@@ -12,7 +12,7 @@ comments = false
 
 # 从一段布尔表达式代码理解 Why OCaml
 
-这是 Jane Street 老视频观后感系列的第一篇，记下我看完 Yaron Minsky 的 [Why OCaml?](https://blog.janestreet.com/why-ocaml/) 后最有感觉的一段代码，以及我对选择 OCaml 这件事的理解。官方介绍说明，这场分享来自 2015 年的实习生项目，博客于 2016 年发布。
+这是 Jane Street 老视频观后感系列的第一篇，记下我看完 Yaron Minsky 的 [Why OCaml?](https://blog.janestreet.com/why-ocaml/) 后最有感觉的一段代码，以及我对选择 OCaml 的理解。
 
 我最喜欢的地方是：布尔运算的结构可以固定下来，而叶子上放什么、怎样把叶子解释为真假，都可以留给使用者决定。
 
@@ -40,7 +40,7 @@ let rec eval eval_base expr =
   | Not x -> not (eval' x)
 ```
 
-这个表达式类型包含真、假、与、或、非，以及一个存放自定义值的叶子。`eval` 负责递归处理布尔结构，遇到 `Base` 时，把具体值交给 `eval_base`。局部函数 `eval'` 只是把当前解释规则固定下来，方便递归调用。与和或仍然保留短路求值。
+`eval` 负责与、或、非这些布尔结构，遇到叶子 `Base`，就把具体值交给 `eval_base`。局部函数 `eval'` 固定当前解释规则，方便递归调用。与和或保留短路求值。
 
 它的推导类型把这个分工写得很清楚：
 
@@ -100,20 +100,55 @@ let () =
 
 这两条规则都接受 `string`，返回 `bool`，所以类型系统都允许。至于哪条规则适合当前业务，取决于我想表达什么。
 
-因此，我愿意把这个设计理解成“两层可复用性”：一层更换叶子的类型，另一层在类型不变时更换解释规则。严格说，前者是参数多态，后者是通过高阶函数实现的行为参数化；这里并没有引入第二种独立的类型多态机制。[OCaml 手册](https://ocaml.org/manual/5.4/coreexamples.html) 对类型变量和函数作为值的介绍，也对应着这两部分。
+我一开始把这理解成“两重 polymorphism”。更准确地说，是两层可复用性：`'a` 负责类型上的参数多态，`eval_base` 负责行为上的参数化。后者靠的是高阶函数：传入的两个函数即使都是 `string -> bool`，行为仍然可以不同。[OCaml 手册](https://ocaml.org/manual/5.4/coreexamples.html) 对类型变量和函数作为值的介绍，正好对应这两部分。
 
-这个例子让我直观地看到，把结构与解释分开之后，一小段代码就能保留很多使用空间，同时让编译器检查表达式和解释函数是否匹配。
+## 再往前一步：叶子也可以是业务条件
+
+拿我的博客举例，如果以后做文章筛选，叶子可以表示“带有某个标签”或“作者是某个人”。下面是我据此补充的小例子：
+
+```ocaml
+type condition =
+  | Author_is of string
+  | Has_tag of string
+
+type article =
+  { author : string
+  ; tags : string list
+  }
+
+let check_condition article = function
+  | Author_is name -> String.equal article.author name
+  | Has_tag tag -> List.exists (String.equal tag) article.tags
+
+let query =
+  And (Base (Has_tag "ocaml"), Not (Base (Author_is "anonymous")))
+
+let matches article = eval (check_condition article) query
+
+let () =
+  assert (matches { author = "young"; tags = [ "ocaml" ] });
+  assert (not (matches { author = "anonymous"; tags = [ "ocaml" ] }));
+  assert (not (matches { author = "young"; tags = [ "travel" ] }))
+```
+
+这条规则表示：带有 OCaml 标签，并且作者不是匿名用户。`query` 只描述条件怎样组合，`check_condition` 结合当前文章判断每个条件，原来的求值器完全不用改。
+
+这里所有叶子的类型都是 `condition`，但可以使用不同的构造器表达不同条件。这让我看到，前面的数字、字符串例子还可以进一步变成一个小型规则系统。
+
+更有意思的是，规则本身已经是一棵数据树。除了执行它，我还可以另外写函数，把它显示成文字，或者简化 `And (True, x)` 这样的结构。《[Real World OCaml](https://dev.realworldocaml.org/variants.html)》也用布尔表达式展示了这种设计。
+
+类型系统在这里帮我检查表达式和解释函数是否匹配；增加新的条件时，完整性检查也能提醒我补上遗漏的分支。至于条件是不是符合业务意图，仍然要由我确认。
 
 ## 我理解的 sweet spot
 
-从这个例子回到整个视频，我的主要感受是：OCaml 在强大的类型表达能力、简洁的代码和编译后程序的执行效率之间，找到了一个很吸引我的平衡点。抽象能力和运行效率可以同时成为选语言的理由。当然，这段代码本身不是性能测试，不能单凭它推导出某个具体程序的性能结论。
+从这个例子回到整个视频，我的主要感受是：OCaml 在类型表达能力、代码简洁和执行效率之间，找到了一个很吸引我的 sweet spot。抽象能力和运行效率可以同时成为选语言的理由。不过，高效不等于抽象没有成本，具体程序还是要测量。这个平衡点也要放在团队和问题里看，官方介绍强调的就是 Jane Street 自己的使用场景。
 
-而选择语言也不只是看类型系统。[讲者的幻灯片](https://slides.com/yaronminsky/why-ocaml) 还列出了教学、招聘和工具方面的问题。沿着这些问题，我自己的理解是：
+[讲者的幻灯片](https://slides.com/yaronminsky/why-ocaml) 还讨论了教学、招聘和工具。我自己的理解是：
 
-- 教学：语言足够有表达力，也要考虑新人能否学会并用来协作。
-- 招聘：愿意学习这门语言的人可能很合拍，但候选人的范围也会受到影响。
-- 工具：语言本身再好，构建、编辑器和库也需要投入精力，生态的便利并不是免费的。
+- 教学：表达能力要强，新人也要能逐步学会，用来协作。
+- 招聘：愿意学这门语言的人可能很合拍，候选范围也会受到影响。
+- 工具：构建、编辑器和库都需要维护，团队要有能力承担这些投入。
 
-所以，我暂时把 OCaml 记成一个 “brilliant, but not brilliantly hard” 的选择：设计聪明，有足够强的表达能力，同时又让我觉得这些能力可以逐步学会、实际用起来。这是我的观后感概括，不是讲者原话，也不是说学习它毫无门槛。
+所以，我把 OCaml 记成一个 “brilliant, but not brilliantly hard” 的选择。这是我的概括，不是讲者原话。它有聪明的设计，也允许我从普通函数、数据类型和模式匹配开始，边学边用，需要时再采用更复杂的抽象。
 
-这段小程序正好承载了这种感受：类型参数负责开放数据类型，函数参数负责开放解释规则，剩下的布尔结构保持清楚而稳定。
+这段小程序就让我有这种感觉：类型可以换，解释规则可以换，布尔结构仍然清楚。再往前一步，它就能用来描述我自己的业务规则。

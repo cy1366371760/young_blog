@@ -12,7 +12,7 @@ comments = false
 
 # Understanding Why OCaml Through a Boolean Expression Evaluator
 
-This is the first entry in my notes on older Jane Street videos. After watching Yaron Minsky's [Why OCaml?](https://blog.janestreet.com/why-ocaml/), I wanted to keep the code that stayed with me and explain what it taught me about choosing OCaml. The official introduction places the talk in the 2015 internship program; the blog post appeared in 2016.
+This is the first entry in my notes on older Jane Street videos. After watching Yaron Minsky's [Why OCaml?](https://blog.janestreet.com/why-ocaml/), I wanted to keep the code that stayed with me and explain how I think about choosing OCaml.
 
 What I like most is that the structure of Boolean operations can stay fixed while users choose both the values at the leaves and how to interpret them as true or false.
 
@@ -40,7 +40,7 @@ let rec eval eval_base expr =
   | Not x -> not (eval' x)
 ```
 
-The expression type contains truth, falsehood, conjunction, disjunction, negation, and a leaf holding a custom value. `eval` recursively handles the Boolean structure. At `Base`, it delegates the value to `eval_base`. The local function `eval'` simply fixes the current interpretation rule for recursive calls. Conjunction and disjunction retain short-circuit evaluation.
+`eval` handles Boolean structure such as conjunction, disjunction, and negation. At a `Base` leaf, it delegates the value to `eval_base`. The local function `eval'` fixes the current interpretation rule for recursive calls. Conjunction and disjunction retain short-circuit evaluation.
 
 Its inferred type makes that division of responsibility explicit:
 
@@ -100,20 +100,55 @@ let () =
 
 Both rules accept `string` and return `bool`, so both satisfy the type checker. Which one fits the application depends on the meaning I want.
 
-I therefore think of this design as having “two layers of reuse”: changing the leaf type, and changing the interpretation while keeping the type fixed. More precisely, the former is parametric polymorphism; the latter is behavior parameterized through a higher-order function. It does not introduce a second, independent type-polymorphism mechanism. The [OCaml manual](https://ocaml.org/manual/5.4/coreexamples.html) introduces type variables and functions as values, which correspond to these two parts.
+I initially thought of this as “two layers of polymorphism.” More precisely, it offers two layers of reuse: `'a` provides parametric polymorphism over types, and `eval_base` parameterizes behavior. The latter uses a higher-order function: two functions can both have type `string -> bool` and still behave differently. The [OCaml manual](https://ocaml.org/manual/5.4/coreexamples.html) introduces type variables and functions as values, matching these two parts.
 
-This example makes the benefit of separating structure from interpretation tangible. A small amount of code leaves many possibilities open while the compiler checks that the expression and its interpreter agree.
+## One Step Further: Leaves Can Be Business Conditions
+
+If I add article filtering to my blog in the future, leaves could mean “has a particular tag” or “was written by a particular author.” Here is a small example I added to explore that idea:
+
+```ocaml
+type condition =
+  | Author_is of string
+  | Has_tag of string
+
+type article =
+  { author : string
+  ; tags : string list
+  }
+
+let check_condition article = function
+  | Author_is name -> String.equal article.author name
+  | Has_tag tag -> List.exists (String.equal tag) article.tags
+
+let query =
+  And (Base (Has_tag "ocaml"), Not (Base (Author_is "anonymous")))
+
+let matches article = eval (check_condition article) query
+
+let () =
+  assert (matches { author = "young"; tags = [ "ocaml" ] });
+  assert (not (matches { author = "anonymous"; tags = [ "ocaml" ] }));
+  assert (not (matches { author = "young"; tags = [ "travel" ] }))
+```
+
+This rule means: has the OCaml tag and was not written by an anonymous user. `query` describes how conditions combine, while `check_condition` checks each condition against the current article. The original evaluator needs no changes.
+
+All leaves have type `condition`, but different constructors express different conditions. This shows me how the earlier number and string examples can grow into a small rule system.
+
+More interestingly, the rule itself is now a data tree. Beyond executing it, I could write other functions to display it as text or simplify structures such as `And (True, x)`. [Real World OCaml](https://dev.realworldocaml.org/variants.html) also uses Boolean expressions to illustrate this design.
+
+The type system checks that the expression and its interpreter agree. When I add a condition, exhaustiveness checking can also remind me to handle missing cases. Whether the conditions match the intended business rules is still up to me.
 
 ## The Sweet Spot as I Understand It
 
-Stepping back from this example, my main impression of the video is that OCaml strikes an appealing balance between expressive types, concise code, and efficient compiled execution. Abstraction and runtime efficiency can both be reasons to choose a language. This code is not itself a benchmark, though, and cannot establish the performance of a particular program.
+Stepping back from this example, my main impression is that OCaml finds an appealing sweet spot between expressive types, concise code, and execution efficiency. Abstraction and runtime efficiency can both be reasons to choose a language. Efficiency does not make abstraction free, though; actual programs still need measurement. The balance also depends on the team and the problem. The official introduction emphasizes Jane Street's own use case.
 
-Choosing a language also involves more than its type system. The [speaker's slides](https://slides.com/yaronminsky/why-ocaml) raise questions about teaching, hiring, and tools. My own reflections on those questions are:
+The [speaker's slides](https://slides.com/yaronminsky/why-ocaml) also discuss teaching, hiring, and tools. My own understanding is:
 
-- Teaching: a language should offer expressive power while remaining something newcomers can learn and use collaboratively.
-- Hiring: people willing to learn the language may be a good fit, but the choice also affects the pool of candidates.
-- Tools: even a good language needs investment in builds, editors, and libraries. A convenient ecosystem takes work.
+- Teaching: a language should be expressive while allowing newcomers to learn gradually and work together.
+- Hiring: people willing to learn it may be a good fit, but the choice also affects the candidate pool.
+- Tools: builds, editors, and libraries need maintenance, and the team needs the capacity to support that work.
 
-For now, I think of OCaml as a “brilliant, but not brilliantly hard” choice: cleverly designed and expressive, with capabilities I can imagine learning gradually and putting to practical use. That is my personal summary, not a quotation from the speaker or a claim that learning it is effortless.
+I therefore think of OCaml as a “brilliant, but not brilliantly hard” choice. That is my summary, not a quotation from the speaker. It offers clever designs while letting me start with ordinary functions, data types, and pattern matching, learn by doing, and adopt more complex abstractions when I need them.
 
-This small program captures that impression well. A type parameter leaves the data type open, a function parameter leaves the interpretation open, and the Boolean structure stays clear and stable.
+This small program gives me that feeling: the types can change, the interpretation rules can change, and the Boolean structure stays clear. One step further, it can describe business rules of my own.

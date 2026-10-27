@@ -15,7 +15,9 @@ problem-solving reflections.
 
 The `ocaml-learning/jane-street-video-notes` section now starts a bilingual
 series on older Jane Street talks with Why OCaml, its Boolean evaluator, and
-reflections on type polymorphism and configurable interpretation rules.
+reflections on type polymorphism and configurable interpretation rules. The
+article now connects the evaluator to a standalone blog-filtering example;
+application search and filtering remain unimplemented.
 
 The Essays / Notes / Daily section now includes a Chinese-first personal diary.
 The diary helper keeps unfinished translations outside published content, then

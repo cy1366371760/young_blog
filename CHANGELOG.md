@@ -40,6 +40,9 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Changed
 
+- Refined the Why OCaml notes with a blog-filtering example, clearer terminology,
+  and concise reflections on reusable rules and engineering tradeoffs.
+
 - Displayed article lists directly in the main column and moved category and
   subcategory selection into a persistent right-hand navigation panel.
 - Derived locale, content-area, and route filters through separate Bonsai

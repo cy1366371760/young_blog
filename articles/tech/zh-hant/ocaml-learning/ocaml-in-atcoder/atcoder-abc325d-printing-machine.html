@@ -1,0 +1,240 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginner Contest 325</li>
+<li>題目：D - Printing Machine</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abc325/tasks/abc325_d?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>商品 <code>i</code> 在時刻 <code>T_i</code> 進入打印機範圍，並在時刻 <code>T_i + D_i</code> 離開。打印一個商品是瞬間完成的，但兩次打印之間至少要間隔 <code>1</code> 微秒。目標是選擇打印對象和時刻，使打印過的商品數量最大。</p>
+<p>每個商品都可以看成一個閉區間 <code>[T_i, T_i + D_i]</code>：只能在這個區間內爲它安排一個整數打印時刻。於是問題變成了帶釋放時間和截止時間的單位任務調度。</p>
+<h1>貪心與掃描線</h1>
+<p>在當前時刻，所有已經進入、尚未離開且沒有打印的商品都是候選。此時應選擇截止時間最早的商品。</p>
+<p>交換論證很直接：假設某個最優方案在當前時刻先打印截止時間較晚的商品 <code>b</code>，而截止時間更早的商品 <code>a</code> 在之後纔打印。交換兩者的打印時刻後，<code>a</code> 一定仍來得及；<code>b</code> 的截止時間不早於 <code>a</code>，也不會因爲交換而失效。因此，總能得到一個同樣最優、但當前先處理最早截止商品的方案。</p>
+<p>實現時先按進入時間排序，再維護：</p>
+<ul>
+<li>尚未進入的商品列表；</li>
+<li>已進入商品的截止時間多重集合；</li>
+<li>當前時刻；</li>
+<li>已打印數量。</li>
+</ul>
+<p>每一步執行以下一種操作：</p>
+<p>1. 把所有進入時間不晚於當前時刻的商品逐個加入等待集合。 2. 若等待集合非空，取最小截止時間：未過期就打印並令時間加一，已過期就丟棄。 3. 若等待集合爲空，直接跳到下一個商品的進入時間，避免逐微秒模擬空閒區間。</p>
+<p>排序需要 <code>O(N log N)</code>，每個商品至多進入和離開有序集合各一次，因此總時間複雜度是 <code>O(N log N)</code>，空間複雜度是 <code>O(N)</code>。</p>
+<h1>第一版：把整個過程寫進狀態</h1>
+<p><code>main.ml</code> 沒有使用全局可變堆，而是把掃描過程表示爲一個不可變狀態。<code>solve</code> 每次根據“下一個商品是否已經到達”和“等待集合是否爲空”選擇一次狀態轉移，然後尾遞歸到下一步。</p>
+<p>Core 的 <code>Map</code> 在這裏充當按截止時間排序的多重集合。鍵是截止時間，值是擁有該截止時間的商品數量。<code>Map.min_elt</code> 找到最早截止時間；刪除一個元素時，計數降到零才移除鍵。</p>
+<pre><code class="language-ocaml">open Core
+
+let read_int () = Scanf.scanf &quot; %d&quot; (fun x -&gt; x)
+let read_pair_int () = Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; (x, y))
+
+type state = {
+  products : (int*int) List.t;
+  waiting : (int, int, Int.comparator_witness) Map.t;
+  now : int;
+  printed : int;
+}
+
+let handle_product {products; waiting; now; printed} =
+  match products with 
+  | [] -&gt; raise_s [%message &quot;handle_product: empty products&quot;]
+  | (start, end_) :: rem -&gt; 
+    let waiting =
+      Map.update waiting end_ ~f:(function
+        | None -&gt; 1
+        | Some x -&gt; x + 1) in
+    {products = rem; waiting; now = Int.max now start; printed}
+
+let handle_waiting {products; waiting; now; printed} =
+  match Map.min_elt waiting with
+  | None -&gt; raise_s [%message &quot;handle_waiting: empty waiting&quot;]
+  | Some (time, _) -&gt; 
+    let waiting = Map.change waiting time ~f:(function
+    | Some 1 -&gt; None
+    | Some 0 | None -&gt; raise_s [%message &quot;invalid map value&quot;]
+    | Some x -&gt; Some (x - 1)) in
+    let now, printed = 
+      if now &lt;= time then (now + 1, printed + 1) 
+      else (now, printed) in
+    {products; waiting; now; printed}
+
+let rec solve ({products; waiting; now; printed} as sta) =
+  match products with
+  | [] -&gt; 
+    if Map.is_empty waiting then printed
+    else solve (handle_waiting sta)
+  | (start, _) :: _ -&gt; 
+    if start &lt;= now then solve (handle_product sta)
+    else 
+      if Map.is_empty waiting then
+        solve (handle_product sta) 
+      else 
+        solve (handle_waiting sta)
+
+let () =
+  let n = read_int () in
+  let products =
+    List.init n ~f:(fun _ -&gt;
+      let start, duration = read_pair_int () in
+      (start, start + duration))
+  in
+  let products = List.sort products ~compare:(fun (start1, _) (start2, _) -&gt; 
+    Int.compare start1 start2)
+  in
+  let waiting = Map.empty (module Int) in
+  let ans = 
+    solve {products; waiting; now = 0; printed = 0}
+  in
+  printf &quot;%d\n&quot; ans</code></pre>
+<p>這版的四個狀態字段正好對應算法所需的信息。<code>handle_product</code> 負責掃描線的到達事件，<code>handle_waiting</code> 負責打印或清理過期商品，<code>solve</code> 只負責決定下一種事件。</p>
+<p>類型 <code>(int, int, Int.comparator_witness) Map.t</code> 中，前兩個參數分別是鍵和值。第三個參數記錄這張 Map 使用的是整數比較器；這個“見證”讓 Core 在類型層面阻止使用不兼容比較器的 Map 被混在一起。創建 <code>Map.empty (module Int)</code> 時，Core 同時取得整數比較函數和對應的見證類型。</p>
+<p>還有兩個邊界值得留意：離開時刻也允許打印，所以判斷是 <code>now &lt;= time</code>；而 <code>T_i + D_i</code> 最大爲 <code>2 × 10^18</code>，在 AtCoder 的 64 位 OCaml <code>int</code> 範圍內。</p>
+<h1>整理版：爲多重集合建立邊界</h1>
+<p><code>better.ml</code> 保留相同算法，但讓命名和模塊邊界更貼近題意。</p>
+<ul>
+<li><code>product</code> 明確區分 <code>start</code> 和 <code>deadline</code>，不再依賴二元組位置。</li>
+<li><code>Deadline_multiset</code> 隱藏 Map 的計數實現，只暴露算法真正需要的操作。</li>
+<li><code>pending</code>、<code>time</code> 和 <code>printed_count</code> 比較清楚地表達狀態含義。</li>
+<li>當最早截止時間已經過期時，<code>remove_all</code> 一次刪除擁有同一截止時間的所有商品；既然當前時間只會繼續前進，它們不可能再被打印。</li>
+<li><code>read_products</code> 把遞歸讀入集中在一個函數中，再統一按進入時間排序。</li>
+</ul>
+<pre><code class="language-ocaml">open Core
+
+let read_int () =
+  Scanf.scanf &quot; %d&quot; Fn.id
+
+let read_int_pair () =
+  Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; x, y)
+
+type product =
+  { start : int
+  ; deadline : int
+  }
+
+module Deadline_multiset : sig
+  type t
+
+  val empty : t
+  val is_empty : t -&gt; bool
+  val add : t -&gt; int -&gt; t
+  val min_elt : t -&gt; (int * int) option
+  val remove_one : t -&gt; int -&gt; t
+  val remove_all : t -&gt; int -&gt; t
+end = struct
+  type t = (int, int, Int.comparator_witness) Map.t
+
+  let empty =
+    Map.empty (module Int)
+
+  let is_empty =
+    Map.is_empty
+
+  let min_elt =
+    Map.min_elt
+
+  let add t deadline =
+    Map.update t deadline ~f:(function
+      | None -&gt; 1
+      | Some count -&gt; count + 1)
+
+  let remove_one t deadline =
+    Map.change t deadline ~f:(function
+      | Some 1 -&gt; None
+      | Some count when count &gt; 1 -&gt; Some (count - 1)
+      | Some _ | None -&gt; failwith &quot;invalid deadline multiset&quot;)
+
+  let remove_all t deadline =
+    Map.remove t deadline
+end
+
+type state =
+  { pending : product list
+  ; waiting : Deadline_multiset.t
+  ; time : int
+  ; printed_count : int
+  }
+
+let activate_next_product state =
+  match state.pending with
+  | [] -&gt;
+    failwith &quot;activate_next_product: empty pending&quot;
+  | product :: pending -&gt;
+    { state with
+      pending
+    ; waiting =
+        Deadline_multiset.add
+          state.waiting
+          product.deadline
+    ; time = Int.max state.time product.start
+    }
+
+let process_earliest_waiting state =
+  match Deadline_multiset.min_elt state.waiting with
+  | None -&gt;
+    failwith &quot;process_earliest_waiting: empty waiting&quot;
+  | Some (deadline, _) -&gt;
+    if state.time &gt; deadline
+    then
+      { state with
+        waiting =
+          Deadline_multiset.remove_all
+            state.waiting
+            deadline
+      }
+    else
+      { state with
+        waiting =
+          Deadline_multiset.remove_one
+            state.waiting
+            deadline
+      ; time = state.time + 1
+      ; printed_count = state.printed_count + 1
+      }
+
+let rec solve state =
+  match state.pending with
+  | [] -&gt;
+    if Deadline_multiset.is_empty state.waiting
+    then state.printed_count
+    else solve (process_earliest_waiting state)
+  | product :: _ -&gt;
+    if
+      product.start &lt;= state.time
+      || Deadline_multiset.is_empty state.waiting
+    then
+      solve (activate_next_product state)
+    else
+      solve (process_earliest_waiting state)
+
+let rec read_products remaining acc =
+  if remaining = 0
+  then acc
+  else (
+    let start, duration = read_int_pair () in
+    let product =
+      { start
+      ; deadline = start + duration
+      }
+    in
+    read_products (remaining - 1) (product :: acc))
+
+let () =
+  let n = read_int () in
+
+  let pending =
+    read_products n []
+    |&gt; List.sort ~compare:(fun a b -&gt;
+      Int.compare a.start b.start)
+  in
+
+  let initial_state =
+    { pending
+    ; waiting = Deadline_multiset.empty
+    ; time = 0
+    ; printed_count = 0
+    }
+  in
+
+  printf &quot;%d\n&quot; (solve initial_state)</code></pre>
+<h1>小結</h1>
+<p>這道題的關鍵是把商品看成帶開始時間和截止時間的單位任務：掃描到當前時刻已經可用的任務後，總選截止時間最早的一個。只要等待集合爲空，就把時間跳到下一次到達，整個模擬便不會依賴時間軸的數值範圍。</p>
+<p>OCaml 實現裏最有意思的是狀態轉移的組織方式。不可變記錄與持久化 Map 讓每一步都顯式返回新狀態；再把 Map 封裝成 <code>Deadline_multiset</code> 後，主體代碼幾乎只剩題目語言。與第一版相比，整理版沒有更換算法，卻讓不變量、邊界條件和數據結構職責都更容易檢查。</p>

@@ -1,0 +1,100 @@
+<h1>Understanding Why OCaml Through a Boolean Expression Evaluator</h1>
+<p>This is the first entry in my notes on older Jane Street videos. After watching Yaron Minsky&#39;s <a href="https://blog.janestreet.com/why-ocaml/">Why OCaml?</a>, I wanted to keep the code that stayed with me and explain how I think about choosing OCaml.</p>
+<p>What I like most is that the structure of Boolean operations can stay fixed while users choose both the values at the leaves and how to interpret them as true or false.</p>
+<h2>The Code in the Screenshot</h2>
+<p>This transcribes the screenshot with whitespace and layout tidied up, preserving its type, constructors, and evaluation logic. The later examples are my additions. They use the OCaml standard library and do not require opening Core.</p>
+<pre><code class="language-ocaml">type &#39;a expr =
+  | True
+  | False
+  | And of &#39;a expr * &#39;a expr
+  | Or of &#39;a expr * &#39;a expr
+  | Not of &#39;a expr
+  | Base of &#39;a
+
+let rec eval eval_base expr =
+  let eval&#39; x = eval eval_base x in
+  match expr with
+  | True -&gt; true
+  | False -&gt; false
+  | Base base -&gt; eval_base base
+  | And (x, y) -&gt; eval&#39; x &amp;&amp; eval&#39; y
+  | Or (x, y) -&gt; eval&#39; x || eval&#39; y
+  | Not x -&gt; not (eval&#39; x)</code></pre>
+<p><code>eval</code> handles Boolean structure such as conjunction, disjunction, and negation. At a <code>Base</code> leaf, it delegates the value to <code>eval_base</code>. The local function <code>eval&#39;</code> fixes the current interpretation rule for recursive calls. Conjunction and disjunction retain short-circuit evaluation.</p>
+<p>Its inferred type makes that division of responsibility explicit:</p>
+<pre><code class="language-ocaml">val eval : (&#39;a -&gt; bool) -&gt; &#39;a expr -&gt; bool</code></pre>
+<p>The first argument interprets a leaf as a Boolean, the second is an expression over the corresponding type, and the final result is always Boolean.</p>
+<h2>The First Layer: Polymorphism Over Leaf Types</h2>
+<p>My first observation is that <code>&#39;a</code> lets the same Boolean system work with different types. Leaves can contain <code>int</code> or <code>float</code> values without rewriting the expression structure or evaluator. This is parametric polymorphism.</p>
+<p>For example, I can treat integer zero as false and every other integer as true. For floating-point numbers, I can treat an absolute value below a threshold as false:</p>
+<pre><code class="language-ocaml">let eval_int expr =
+  if expr = 0 then false else true
+
+let epsilon = 1e-6
+
+let eval_float expr =
+  if Float.abs expr &lt; epsilon then false else true
+
+let () =
+  assert (not (eval eval_int (Base 0)));
+  assert (eval eval_int (And (Base 3, Not (Base 0))));
+  assert (not (eval eval_float (Base 1e-8)));
+  assert (eval eval_float (Base 0.1))</code></pre>
+<p>The floating-point rule is a deliberate semantic choice: in this example, “close enough to zero” means false. It is not a built-in truthiness conversion. The example considers only finite floating-point values and uses a positive threshold.</p>
+<p>The type parameter does not mean that a single expression can freely mix integers and strings. Here, an <code>int expr</code> has <code>int</code> leaves throughout, and its interpretation function must also accept <code>int</code>.</p>
+<h2>The Second Layer: Different Interpretations of One Type</h2>
+<p>What interests me even more is that fixing the leaf type to <code>string</code> still leaves room to change its interpretation.</p>
+<p>One rule treats only the literal <code>&quot;false&quot;</code> as false. Another treats only the empty string <code>&quot;&quot;</code> as false. Passing the same expression to different interpretation functions can produce different results:</p>
+<pre><code class="language-ocaml">let eval_string_false expr =
+  if String.equal expr &quot;false&quot; then false else true
+
+let eval_string_empty expr =
+  if String.equal expr &quot;&quot; then false else true
+
+let same_expr = Base &quot;false&quot;
+
+let () =
+  assert (not (eval eval_string_false same_expr));
+  assert (eval eval_string_empty same_expr);
+  assert (eval eval_string_false (Base &quot;&quot;));
+  assert (not (eval eval_string_empty (Base &quot;&quot;)))</code></pre>
+<p>Both rules accept <code>string</code> and return <code>bool</code>, so both satisfy the type checker. Which one fits the application depends on the meaning I want.</p>
+<p>I initially thought of this as “two layers of polymorphism.” More precisely, it offers two layers of reuse: <code>&#39;a</code> provides parametric polymorphism over types, and <code>eval_base</code> parameterizes behavior. The latter uses a higher-order function: two functions can both have type <code>string -&gt; bool</code> and still behave differently. The <a href="https://ocaml.org/manual/5.4/coreexamples.html">OCaml manual</a> introduces type variables and functions as values, matching these two parts.</p>
+<h2>One Step Further: Leaves Can Be Business Conditions</h2>
+<p>If I add article filtering to my blog in the future, leaves could mean “has a particular tag” or “was written by a particular author.” Here is a small example I added to explore that idea:</p>
+<pre><code class="language-ocaml">type condition =
+  | Author_is of string
+  | Has_tag of string
+
+type article =
+  { author : string
+  ; tags : string list
+  }
+
+let check_condition article = function
+  | Author_is name -&gt; String.equal article.author name
+  | Has_tag tag -&gt; List.exists (String.equal tag) article.tags
+
+let query =
+  And (Base (Has_tag &quot;ocaml&quot;), Not (Base (Author_is &quot;anonymous&quot;)))
+
+let matches article = eval (check_condition article) query
+
+let () =
+  assert (matches { author = &quot;young&quot;; tags = [ &quot;ocaml&quot; ] });
+  assert (not (matches { author = &quot;anonymous&quot;; tags = [ &quot;ocaml&quot; ] }));
+  assert (not (matches { author = &quot;young&quot;; tags = [ &quot;travel&quot; ] }))</code></pre>
+<p>This rule means: has the OCaml tag and was not written by an anonymous user. <code>query</code> describes how conditions combine, while <code>check_condition</code> checks each condition against the current article. The original evaluator needs no changes.</p>
+<p>All leaves have type <code>condition</code>, but different constructors express different conditions. This shows me how the earlier number and string examples can grow into a small rule system.</p>
+<p>More interestingly, the rule itself is now a data tree. Beyond executing it, I could write other functions to display it as text or simplify structures such as <code>And (True, x)</code>. <a href="https://dev.realworldocaml.org/variants.html">Real World OCaml</a> also uses Boolean expressions to illustrate this design.</p>
+<p>The type system checks that the expression and its interpreter agree. When I add a condition, exhaustiveness checking can also remind me to handle missing cases. Whether the conditions match the intended business rules is still up to me.</p>
+<h2>The Sweet Spot as I Understand It</h2>
+<p>Stepping back from this example, my main impression is that OCaml finds an appealing sweet spot between expressive types, concise code, and execution efficiency. Abstraction and runtime efficiency can both be reasons to choose a language. Efficiency does not make abstraction free, though; actual programs still need measurement. The balance also depends on the team and the problem. The official introduction emphasizes Jane Street&#39;s own use case.</p>
+<p>The <a href="https://slides.com/yaronminsky/why-ocaml">speaker&#39;s slides</a> also discuss teaching, hiring, and tools. My own understanding is:</p>
+<ul>
+<li>Teaching: a language should be expressive while allowing newcomers to learn gradually and work together.</li>
+<li>Hiring: people willing to learn it may be a good fit, but the choice also affects the candidate pool.</li>
+<li>Tools: builds, editors, and libraries need maintenance, and the team needs the capacity to support that work.</li>
+</ul>
+<p>I therefore think of OCaml as a “brilliant, but not brilliantly hard” choice. That is my summary, not a quotation from the speaker. It offers clever designs while letting me start with ordinary functions, data types, and pattern matching, learn by doing, and adopt more complex abstractions when I need them.</p>
+<p>This small program gives me that feeling: the types can change, the interpretation rules can change, and the Boolean structure stays clear. One step further, it can describe business rules of my own.</p>

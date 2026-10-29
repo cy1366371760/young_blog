@@ -1,0 +1,26 @@
+<h1>问题</h1>
+<ul>
+<li>平台：AtCoder Beginners Selection</li>
+<li>题目：ABC086A - Product</li>
+<li>链接：<a href="https://atcoder.jp/contests/abs/tasks/abc086_a?lang=en">AtCoder 题目说明</a></li>
+</ul>
+<p>给定两个正整数，判断它们的乘积是偶数还是奇数。</p>
+<h2>思路</h2>
+<p>一个乘积是偶数，当且仅当它除以 <code>2</code> 的余数为零。先计算乘积，可以让判断条件直接而易读。</p>
+<h2>算法</h2>
+<ul>
+<li>读取 <code>a</code> 和 <code>b</code>。</li>
+<li>计算 <code>a * b</code>。</li>
+<li>如果乘积能被 <code>2</code> 整除，输出 <code>Even</code>；否则输出 <code>Odd</code>。</li>
+</ul>
+<p>时间复杂度和额外空间复杂度都是常数。</p>
+<h2>反思</h2>
+<p>在 OCaml 中判断值是否相等，应使用单个等号：<code>=</code>。运算符 <code>==</code> 判断物理相等，也就是两个值是否由同一个对象表示。对于整数这样的立即值，它恰好可能与 <code>=</code> 得到相同结果，但不应把它作为比较值时的默认选择。</p>
+<h2>OCaml 实现</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%d %d&quot; (fun a b -&gt;
+    let product = a * b in
+    if product mod 2 = 0 then printf &quot;Even\n&quot;
+    else printf &quot;Odd\n&quot;)</code></pre>

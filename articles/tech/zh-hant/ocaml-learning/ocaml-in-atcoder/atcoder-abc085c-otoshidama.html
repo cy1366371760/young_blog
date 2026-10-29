@@ -1,0 +1,76 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginners Selection</li>
+<li>題目：ABC085C - Otoshidama</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abs/tasks/abc085_c?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>給定總價值爲 <code>Y</code> 日元的 <code>N</code> 張紙幣，求一種由 <code>10000</code>、<code>5000</code> 和 <code>1000</code> 日元紙幣組成的可能數量。如果不存在這樣的組合，輸出 <code>-1 -1 -1</code>。</p>
+<h2>思路</h2>
+<p>先選定 <code>10000</code> 日元紙幣的數量。做出這個選擇後，只剩下 <code>5000</code> 與 <code>1000</code> 日元紙幣的數量和值。這兩個未知數由兩個方程決定，因此不需要第二層嵌套循環。</p>
+<p>設有 <code>a</code> 張 <code>5000</code> 日元紙幣和 <code>b</code> 張 <code>1000</code> 日元紙幣，剩餘紙幣數量爲 <code>num</code>，剩餘金額爲 <code>total</code>：</p>
+<pre><code class="language-text">5000a + 1000b = total
+a + b = num</code></pre>
+<p>用第一個方程減去 <code>1000 * (a + b)</code>，得到：</p>
+<pre><code class="language-text">4000a = total - 1000 * num</code></pre>
+<p>右側必須非負並且能被 <code>4000</code> 整除。隨後，<code>b</code> 就是 <code>num - a</code>。</p>
+<h2>算法</h2>
+<ul>
+<li>從 <code>0</code> 到 <code>N</code> 枚舉 <code>n10000</code>。</li>
+<li>剩餘紙幣數量爲 <code>N - n10000</code>，並從 <code>Y</code> 中減去已經選定紙幣的價值。</li>
+<li>求解剩餘的二元方程，並驗證兩個數量都非負。</li>
+<li>返回第一個有效三元組；如果不存在，則返回 <code>-1 -1 -1</code>。</li>
+</ul>
+<p>時間複雜度是 <code>O(N)</code>。<code>better.ml</code> 實現使用 <code>Sequence</code>，因此會惰性地產生候選值，而不是分配一個包含 <code>N + 1</code> 個值的列表。</p>
+<h2>反思</h2>
+<p><code>Sequence.range</code> 很適合這裏，因爲候選值會逐個消費，而且找到第一個答案後搜索就會停止。相比之下，<code>List.init</code> 會在 <code>List.find_map</code> 開始搜索之前構建完整的候選列表。兩者的漸近時間複雜度相同，但序列版本使用的中間空間更少。</p>
+<p><code>solve_remaining ~num ~total</code> 中的標籤參數，讓含義不同的兩個整數輸入更不容易被意外交換。調用處讀起來也更像它所表達的方程。</p>
+<p><code>find_map</code> 不只是找出匹配的輸入：它會返回映射函數產生的第一個非 <code>None</code> 值。因此，可以自然地把求出的 <code>n10000</code>、<code>n5000</code> 和 <code>n1000</code> 數量作爲最終三元組保存在一起。</p>
+<h2>原始 OCaml 實現</h2>
+<pre><code class="language-ocaml">open Core
+
+(* 5000a + 1000b = tot, a + b = num *)
+let solve num tot =
+  let a_4000 = tot - num * 1000 in
+  if a_4000 &lt; 0 || a_4000 mod 4000 &lt;&gt; 0 then None
+  else let a = a_4000 / 4000 in
+  let b = num - a in
+  if a &lt; 0 || b &lt; 0 then None
+  else Some(a, b)
+
+let () =
+  let n,y = Scanf.scanf &quot; %d %d&quot; (fun x y -&gt; (x, y)) in
+  List.init (n + 1) ~f:(fun x -&gt; x)
+  |&gt; List.find_map ~f:(fun x -&gt; solve (n - x) (y - 10000 * x))
+  |&gt; function
+  | None -&gt; printf &quot;-1 -1 -1\n&quot;
+  | Some(a,b) -&gt; printf &quot;%d %d %d\n&quot; (n-a-b) a b</code></pre>
+<h2>改進後的 OCaml 實現</h2>
+<pre><code class="language-ocaml">open Core
+
+let solve_remaining ~num ~total =
+  let excess = total - (num * 1000) in
+  if excess &lt; 0 || excess mod 4000 &lt;&gt; 0 then
+    None
+  else
+    let n5000 = excess / 4000 in
+    let n1000 = num - n5000 in
+    if n5000 &lt;= num then
+      Some (n5000, n1000)
+    else
+      None
+
+let () =
+  let n, y = Scanf.scanf &quot; %d %d&quot; (fun n y -&gt; n, y) in
+
+  Sequence.range 0 (n + 1)
+  |&gt; Sequence.find_map ~f:(fun n10000 -&gt;
+    solve_remaining
+      ~num:(n - n10000)
+      ~total:(y - (10000 * n10000))
+    |&gt; Option.map ~f:(fun (n5000, n1000) -&gt;
+      n10000, n5000, n1000))
+  |&gt; function
+  | Some (a, b, c) -&gt;
+      printf &quot;%d %d %d\n&quot; a b c
+  | None -&gt;
+      printf &quot;-1 -1 -1\n&quot;</code></pre>

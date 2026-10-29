@@ -1,0 +1,26 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: ABC081A - Placing Marbles</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/abc081_a?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>The input is a string of three <code>0</code> or <code>1</code> characters. Count how many positions contain <code>1</code>.</p>
+<h2>Idea</h2>
+<p>The input is already a string, so scan its characters and count the characters equal to <code>&#39;1&#39;</code>. <code>String.count</code> expresses the task directly.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Read the binary string.</li>
+<li>Count characters equal to <code>&#39;1&#39;</code>.</li>
+<li>Print the count.</li>
+</ul>
+<p>The running time is <code>O(|s|)</code> and the extra space is constant. Here <code>|s| = 3</code>.</p>
+<h2>Reflection</h2>
+<p><code>Scanf.scanf</code> is needed because it is the formatted-input parser: it receives a format string and a continuation that consumes the parsed values. In contrast, after opening <code>Core</code>, <code>printf</code> is directly available for formatted output.</p>
+<p>The pattern in <code>let () = ...</code> requires the expression on its right-hand side to produce <code>unit</code>. This makes it a natural top-level entry point for a program whose purpose is its input/output effects.</p>
+<h2>OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%s&quot; (fun s -&gt;
+    printf &quot;%d\n&quot; (String.count s ~f:(Char.equal &#39;1&#39;))
+  )</code></pre>

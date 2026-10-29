@@ -1,0 +1,100 @@
+<h1>從一段布爾表達式代碼理解 Why OCaml</h1>
+<p>這是 Jane Street 老視頻觀後感系列的第一篇，記下我看完 Yaron Minsky 的 <a href="https://blog.janestreet.com/why-ocaml/">Why OCaml?</a> 後最有感覺的一段代碼，以及我對選擇 OCaml 的理解。</p>
+<p>我最喜歡的地方是：布爾運算的結構可以固定下來，而葉子上放什麼、怎樣把葉子解釋爲真假，都可以留給使用者決定。</p>
+<h2>圖片裏的代碼</h2>
+<p>下面按截圖抄錄代碼，只整理空白與排版，保留原來的類型、構造器和求值邏輯。後面的示例是我據此補充的，使用 OCaml 標準庫，不需要打開 Core。</p>
+<pre><code class="language-ocaml">type &#39;a expr =
+  | True
+  | False
+  | And of &#39;a expr * &#39;a expr
+  | Or of &#39;a expr * &#39;a expr
+  | Not of &#39;a expr
+  | Base of &#39;a
+
+let rec eval eval_base expr =
+  let eval&#39; x = eval eval_base x in
+  match expr with
+  | True -&gt; true
+  | False -&gt; false
+  | Base base -&gt; eval_base base
+  | And (x, y) -&gt; eval&#39; x &amp;&amp; eval&#39; y
+  | Or (x, y) -&gt; eval&#39; x || eval&#39; y
+  | Not x -&gt; not (eval&#39; x)</code></pre>
+<p><code>eval</code> 負責與、或、非這些布爾結構，遇到葉子 <code>Base</code>，就把具體值交給 <code>eval_base</code>。局部函數 <code>eval&#39;</code> 固定當前解釋規則，方便遞歸調用。與和或保留短路求值。</p>
+<p>它的推導類型把這個分工寫得很清楚：</p>
+<pre><code class="language-ocaml">val eval : (&#39;a -&gt; bool) -&gt; &#39;a expr -&gt; bool</code></pre>
+<p>第一項是把葉子解釋爲布爾值的函數，第二項是對應類型的表達式，最終結果總是布爾值。</p>
+<h2>第一層：對葉子類型的多態</h2>
+<p>我的第一個理解是，<code>&#39;a</code> 讓同一套布爾系統適用於不同類型。葉子可以是 <code>int</code>，也可以是 <code>float</code>，而表達式結構和求值器不需要跟着重寫。這就是參數多態。</p>
+<p>比如，我可以規定整數零爲假，其他整數爲真；對於浮點數，則把絕對值小於某個閾值的數視爲假：</p>
+<pre><code class="language-ocaml">let eval_int expr =
+  if expr = 0 then false else true
+
+let epsilon = 1e-6
+
+let eval_float expr =
+  if Float.abs expr &lt; epsilon then false else true
+
+let () =
+  assert (not (eval eval_int (Base 0)));
+  assert (eval eval_int (And (Base 3, Not (Base 0))));
+  assert (not (eval eval_float (Base 1e-8)));
+  assert (eval eval_float (Base 0.1))</code></pre>
+<p>這裏的浮點規則是我主動選擇的語義：在這個例子裏，“足夠接近零”算假，它不是語言自帶的真假轉換規則。示例只考慮有限浮點數，閾值取正數。</p>
+<p>類型參數也不是說同一個表達式可以隨意混裝整數和字符串。在這裏，一棵 <code>int expr</code> 的葉子統一使用 <code>int</code>，對應的解釋函數也必須接受 <code>int</code>。</p>
+<h2>第二層：同一種類型，也可以有不同的解釋</h2>
+<p>我更感興趣的是，即使把葉子固定爲 <code>string</code>，仍然可以繼續改變它的解釋規則。</p>
+<p>一種規則是隻有字面值 <code>&quot;false&quot;</code> 算假；另一種規則是隻有空字符串 <code>&quot;&quot;</code> 算假。把同一棵表達式交給不同的解釋函數，就可以得到不同的結果：</p>
+<pre><code class="language-ocaml">let eval_string_false expr =
+  if String.equal expr &quot;false&quot; then false else true
+
+let eval_string_empty expr =
+  if String.equal expr &quot;&quot; then false else true
+
+let same_expr = Base &quot;false&quot;
+
+let () =
+  assert (not (eval eval_string_false same_expr));
+  assert (eval eval_string_empty same_expr);
+  assert (eval eval_string_false (Base &quot;&quot;));
+  assert (not (eval eval_string_empty (Base &quot;&quot;)))</code></pre>
+<p>這兩條規則都接受 <code>string</code>，返回 <code>bool</code>，所以類型系統都允許。至於哪條規則適合當前業務，取決於我想表達什麼。</p>
+<p>我一開始把這理解成“兩重 polymorphism”。更準確地說，是兩層可複用性：<code>&#39;a</code> 負責類型上的參數多態，<code>eval_base</code> 負責行爲上的參數化。後者靠的是高階函數：傳入的兩個函數即使都是 <code>string -&gt; bool</code>，行爲仍然可以不同。<a href="https://ocaml.org/manual/5.4/coreexamples.html">OCaml 手冊</a> 對類型變量和函數作爲值的介紹，正好對應這兩部分。</p>
+<h2>再往前一步：葉子也可以是業務條件</h2>
+<p>拿我的博客舉例，如果以後做文章篩選，葉子可以表示“帶有某個標籤”或“作者是某個人”。下面是我據此補充的小例子：</p>
+<pre><code class="language-ocaml">type condition =
+  | Author_is of string
+  | Has_tag of string
+
+type article =
+  { author : string
+  ; tags : string list
+  }
+
+let check_condition article = function
+  | Author_is name -&gt; String.equal article.author name
+  | Has_tag tag -&gt; List.exists (String.equal tag) article.tags
+
+let query =
+  And (Base (Has_tag &quot;ocaml&quot;), Not (Base (Author_is &quot;anonymous&quot;)))
+
+let matches article = eval (check_condition article) query
+
+let () =
+  assert (matches { author = &quot;young&quot;; tags = [ &quot;ocaml&quot; ] });
+  assert (not (matches { author = &quot;anonymous&quot;; tags = [ &quot;ocaml&quot; ] }));
+  assert (not (matches { author = &quot;young&quot;; tags = [ &quot;travel&quot; ] }))</code></pre>
+<p>這條規則表示：帶有 OCaml 標籤，並且作者不是匿名用戶。<code>query</code> 只描述條件怎樣組合，<code>check_condition</code> 結合當前文章判斷每個條件，原來的求值器完全不用改。</p>
+<p>這裏所有葉子的類型都是 <code>condition</code>，但可以使用不同的構造器表達不同條件。這讓我看到，前面的數字、字符串例子還可以進一步變成一個小型規則系統。</p>
+<p>更有意思的是，規則本身已經是一棵數據樹。除了執行它，我還可以另外寫函數，把它顯示成文字，或者簡化 <code>And (True, x)</code> 這樣的結構。《<a href="https://dev.realworldocaml.org/variants.html">Real World OCaml</a>》也用布爾表達式展示了這種設計。</p>
+<p>類型系統在這裏幫我檢查表達式和解釋函數是否匹配；增加新的條件時，完整性檢查也能提醒我補上遺漏的分支。至於條件是不是符合業務意圖，仍然要由我確認。</p>
+<h2>我理解的 sweet spot</h2>
+<p>從這個例子回到整個視頻，我的主要感受是：OCaml 在類型表達能力、代碼簡潔和執行效率之間，找到了一個很吸引我的 sweet spot。抽象能力和運行效率可以同時成爲選語言的理由。不過，高效不等於抽象沒有成本，具體程序還是要測量。這個平衡點也要放在團隊和問題裏看，官方介紹強調的就是 Jane Street 自己的使用場景。</p>
+<p><a href="https://slides.com/yaronminsky/why-ocaml">講者的幻燈片</a> 還討論了教學、招聘和工具。我自己的理解是：</p>
+<ul>
+<li>教學：表達能力要強，新人也要能逐步學會，用來協作。</li>
+<li>招聘：願意學這門語言的人可能很合拍，候選範圍也會受到影響。</li>
+<li>工具：構建、編輯器和庫都需要維護，團隊要有能力承擔這些投入。</li>
+</ul>
+<p>所以，我把 OCaml 記成一個 “brilliant, but not brilliantly hard” 的選擇。這是我的概括，不是講者原話。它有聰明的設計，也允許我從普通函數、數據類型和模式匹配開始，邊學邊用，需要時再採用更復雜的抽象。</p>
+<p>這段小程序就讓我有這種感覺：類型可以換，解釋規則可以換，布爾結構仍然清楚。再往前一步，它就能用來描述我自己的業務規則。</p>

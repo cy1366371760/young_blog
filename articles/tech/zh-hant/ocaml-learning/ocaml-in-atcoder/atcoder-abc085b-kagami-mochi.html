@@ -1,0 +1,45 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginners Selection</li>
+<li>題目：ABC085B - Kagami Mochi</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abs/tasks/abc085_b?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>給定 <code>N</code> 個直徑爲整數的圓形年糕。要求堆出盡可能高的一疊，並且每個年糕的直徑都必須嚴格小於它下面的年糕。求最多可以堆多少層。</p>
+<h2>思路</h2>
+<p>每一種不同的直徑都可以在合法堆疊中出現一次，而相同直徑的年糕不能同時使用。因此，答案就是不同直徑的數量。</p>
+<p>這個解法先使用遞歸快速排序對列表排序，然後掃描排序結果，統計相鄰值發生變化的次數。</p>
+<h2>算法</h2>
+<ul>
+<li>讀取 <code>N</code> 個直徑。</li>
+<li>使用快速排序對它們排序。</li>
+<li>遍歷排序後的列表，每個新值只計數一次。</li>
+<li>輸出計數。</li>
+</ul>
+<p>使用隨機樞軸時，快速排序的期望時間複雜度是 <code>O(N log N)</code>。計數過程是 <code>O(N)</code>，基於列表的實現還會爲排序和分區後的列表使用額外內存。</p>
+<h2>反思</h2>
+<p>對於整數，<code>Int.compare</code> 和 <code>Int.equal</code> 可以明確表達預期的類型專用比較。像 <code>&lt;</code> 和 <code>=</code> 這樣的多態比較運算符對整數也正確，但養成使用 <code>Core</code> 輔助函數的習慣會更清晰。當前的 <code>count_unique</code> 實現仍使用 <code>=</code>；在那裏改用 <code>Int.equal</code> 會讓風格保持一致。</p>
+<p>快速排序可以通過匹配 <code>pivot :: rest</code>，再使用一次 <code>List.fold</code> 同時生成小於、等於和大於樞軸的列表，從而更高效地完成分區。這可以替代當前的三次 <code>List.filter</code> 遍歷。它並不是 <code>List</code> 庫的替代方案：模式匹配負責暴露頭部與尾部，<code>List.fold</code> 負責完成單次遍歷。</p>
+<p>在不同值計數的遞歸中，<code>x :: ((y :: _) as tail)</code> 這樣的別名模式可以直接複用 <code>tail</code>，而不用在每次比較後重新構造 <code>y :: rem</code>。配合顯式整數比較，可以寫成緊湊的 <code>if Int.equal x y then count_unique tail else 1 + count_unique tail</code>。</p>
+<p>這道題的輸入規模最多爲 <code>100</code>，因此當前實現已經足夠快。熟悉底層操作後，<code>List.dedup_and_sort ~compare:Int.compare</code> 會是最直接的 <code>Core</code> 庫解法。</p>
+<h2>OCaml 實現</h2>
+<pre><code class="language-ocaml">open Core
+
+let rec qsort a =
+  let n = List.length a in
+  if n &lt;= 1 then a else
+    let pos = Random.int n in
+    let bas = List.nth_exn a pos in
+    qsort (List.filter a ~f:(fun x -&gt; Int.compare x bas &lt; 0)) @
+    (List.filter a ~f:(fun x -&gt; Int.equal x bas)) @
+    qsort (List.filter a ~f:(fun x -&gt; Int.compare x bas &gt; 0))
+
+let () =
+  let n = Scanf.scanf &quot; %d&quot; (fun x -&gt; x) in
+  let d = List.init n ~f:(fun _ -&gt; Scanf.scanf &quot; %d&quot; (fun x -&gt; x)) in
+  let sorted_d = qsort d in
+  let rec count_unique = function
+  | [] -&gt; 0
+  | [_] -&gt; 1
+  | x :: y :: rem -&gt; if x = y then count_unique (y :: rem) else 1 + count_unique (y :: rem) in
+  let res = count_unique sorted_d in
+  printf &quot;%d\n&quot; res</code></pre>

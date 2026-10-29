@@ -1,0 +1,26 @@
+<h1>問題</h1>
+<ul>
+<li>平臺：AtCoder Beginners Selection</li>
+<li>題目：ABC086A - Product</li>
+<li>鏈接：<a href="https://atcoder.jp/contests/abs/tasks/abc086_a?lang=en">AtCoder 題目說明</a></li>
+</ul>
+<p>給定兩個正整數，判斷它們的乘積是偶數還是奇數。</p>
+<h2>思路</h2>
+<p>一個乘積是偶數，當且僅當它除以 <code>2</code> 的餘數爲零。先計算乘積，可以讓判斷條件直接而易讀。</p>
+<h2>算法</h2>
+<ul>
+<li>讀取 <code>a</code> 和 <code>b</code>。</li>
+<li>計算 <code>a * b</code>。</li>
+<li>如果乘積能被 <code>2</code> 整除，輸出 <code>Even</code>；否則輸出 <code>Odd</code>。</li>
+</ul>
+<p>時間複雜度和額外空間複雜度都是常數。</p>
+<h2>反思</h2>
+<p>在 OCaml 中判斷值是否相等，應使用單個等號：<code>=</code>。運算符 <code>==</code> 判斷物理相等，也就是兩個值是否由同一個對象表示。對於整數這樣的立即值，它恰好可能與 <code>=</code> 得到相同結果，但不應把它作爲比較值時的默認選擇。</p>
+<h2>OCaml 實現</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%d %d&quot; (fun a b -&gt;
+    let product = a * b in
+    if product mod 2 = 0 then printf &quot;Even\n&quot;
+    else printf &quot;Odd\n&quot;)</code></pre>

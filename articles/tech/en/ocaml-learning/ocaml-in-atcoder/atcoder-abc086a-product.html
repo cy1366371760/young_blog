@@ -1,0 +1,26 @@
+<h1>Problem</h1>
+<ul>
+<li>Platform: AtCoder Beginners Selection</li>
+<li>Problem: ABC086A - Product</li>
+<li>Link: <a href="https://atcoder.jp/contests/abs/tasks/abc086_a?lang=en">AtCoder problem statement</a></li>
+</ul>
+<p>Given two positive integers, determine whether their product is even or odd.</p>
+<h2>Idea</h2>
+<p>A product is even exactly when its remainder modulo <code>2</code> is zero. Computing the product first makes the condition direct and readable.</p>
+<h2>Algorithm</h2>
+<ul>
+<li>Read <code>a</code> and <code>b</code>.</li>
+<li>Compute <code>a * b</code>.</li>
+<li>Print <code>Even</code> when the product is divisible by <code>2</code>; otherwise print <code>Odd</code>.</li>
+</ul>
+<p>The running time and extra space are both constant.</p>
+<h2>Reflection</h2>
+<p>For value equality in OCaml, use a single equals sign: <code>=</code>. The operator <code>==</code> tests physical equality, meaning whether two values are represented by the same object. It happens to agree with <code>=</code> for immediate values such as integers, but it is the wrong default for comparing values.</p>
+<h2>OCaml Implementation</h2>
+<pre><code class="language-ocaml">open Core
+
+let () =
+  Scanf.scanf &quot;%d %d&quot; (fun a b -&gt;
+    let product = a * b in
+    if product mod 2 = 0 then printf &quot;Even\n&quot;
+    else printf &quot;Odd\n&quot;)</code></pre>

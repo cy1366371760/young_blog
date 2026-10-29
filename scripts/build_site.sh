@@ -13,4 +13,5 @@ cp _build/default/public/posts.js dist/
 cp _build/default/public/styles.css dist/
 cp _build/default/public/app.js dist/
 cp public/_redirects dist/
+cp public/content-index.json dist/
 cp -R public/articles dist/

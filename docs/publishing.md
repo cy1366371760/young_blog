@@ -54,6 +54,11 @@ translates the finished article into the other maintained language.
 For content-only edits, this should be a fast deploy path: no opam switch, no
 Dune rebuild, and no js_of_ocaml compilation.
 
+Both publishing paths include `content-index.json`, a versioned manifest with
+the post index and exact article-body SHA-256 hashes for Android content refresh.
+Keep it synchronized with `posts.js` and `articles/`; do not commit the generated
+manifest to the source branch.
+
 Chinese-first diaries use the existing `essays/notes/daily` section. See
 `diary-workflow.md` for the semi-automatic drafting, translation, PR, merge,
 and deployment helper. Translation remains an editorial step.

@@ -3,6 +3,7 @@ _opam/
 dist/
 public/articles/
 public/posts.js
+public/content-index.json
 node_modules/
 content/inbox/diary/
 

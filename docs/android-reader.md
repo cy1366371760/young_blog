@@ -5,7 +5,7 @@ assets in Capacitor. It supports Android 7.0 (API 24) and later.
 
 ## Build
 
-Requirements: Node.js 22 or later, the repository's opam switch, JDK 21, Android
+Requirements: Node.js 22 or later, opam 2.2 or later with the repository's switch, JDK 21, Android
 SDK platform 36, build tools 36.0.0, and platform tools. Android Studio includes
 a suitable JDK. On macOS the build script discovers its bundled JDK and the
 standard `~/Library/Android/sdk` directory. Other hosts should set `JAVA_HOME`
@@ -13,7 +13,7 @@ and `ANDROID_HOME` explicitly.
 
 ```sh
 npm ci
-opam install . --deps-only --with-test
+opam install . --deps-only --with-test --with-dev-setup
 npm run build:android
 ```
 
@@ -78,6 +78,8 @@ npm run test:browser
 
 The browser suite uses installed Chrome locally and Playwright Chromium on CI.
 Use `npx playwright install chromium` for the CI browser environment.
+The development dependency flag installs the pinned `ocamlformat` version used
+by `.ocamlformat` and the CI format check.
 
 For native smoke tests, install the debug APK and start the app on a dedicated
 emulator, then run:

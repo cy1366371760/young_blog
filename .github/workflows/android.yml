@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libffi-dev libssl-dev pkg-config zlib1g-dev
-          opam install . --deps-only --with-test -y
+          opam install . --deps-only --with-test --with-dev-setup -y
           npm ci
       - name: Check OCaml and content
         run: |

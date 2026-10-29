@@ -84,6 +84,10 @@ static-only and should contain only browser assets such as `index.html`,
 
 ## Android Reader
 
+The Android CI workflow installs the project's development dependencies,
+including the formatter version pinned in `.ocamlformat`, so clean runners can
+run the same formatting checks as local development.
+
 The repository now includes a Capacitor 8 Android reader retaining Bonsai v0.17.
 It bundles all three language variants for first-launch offline use and provides
 search, tag filters, translated favorites, reading preferences, position restore,

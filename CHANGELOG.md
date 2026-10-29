@@ -9,6 +9,8 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 - Declared the pinned OCaml formatter as a development dependency and installed
   development dependencies in Android CI, fixing clean-runner format checks.
+- Selected Android CI SDK packages explicitly to avoid the discontinued legacy
+  `tools` package requested by the setup action's defaults.
 
 ### Added
 

@@ -87,6 +87,8 @@ static-only and should contain only browser assets such as `index.html`,
 The Android CI workflow installs the project's development dependencies,
 including the formatter version pinned in `.ocamlformat`, so clean runners can
 run the same formatting checks as local development.
+Android setup explicitly selects platform tools, SDK 36, and build tools 36.0.0
+instead of relying on the setup action's legacy package defaults.
 
 The repository now includes a Capacitor 8 Android reader retaining Bonsai v0.17.
 It bundles all three language variants for first-launch offline use and provides

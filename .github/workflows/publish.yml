@@ -13,6 +13,10 @@ on:
       - "scripts/build_site.sh"
       - "scripts/generate_posts.mjs"
       - "src/**"
+      - "web/**"
+      - "scripts/build_reader.mjs"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch:
 
 permissions:

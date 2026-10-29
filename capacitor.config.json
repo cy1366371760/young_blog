@@ -1,0 +1,17 @@
+{
+  "appId": "dev.youngblog.reader",
+  "appName": "Young Blog",
+  "webDir": "dist",
+  "backgroundColor": "#f5f4ef",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  },
+  "android": {
+    "zoomEnabled": true,
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

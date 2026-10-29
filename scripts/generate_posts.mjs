@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import OpenCC from "opencc-js";
 
 const contentRoot = "content";
@@ -459,6 +460,10 @@ function writeArticle(post) {
 
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, `${html}\n`);
+  return {
+    path: "/" + path.relative(outputRoot, outputFile).split(path.sep).join("/"),
+    sha256: createHash("sha256").update(`${html}\n`).digest("hex"),
+  };
 }
 
 const sourcePosts = walk(contentRoot).map(postFromFile);
@@ -474,5 +479,9 @@ const output = `globalThis.BLOG_POSTS_SEXP = ${JSON.stringify(sexp)};\n`;
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.rmSync(articlesRoot, { recursive: true, force: true });
 fs.writeFileSync(outputPath, output);
-posts.forEach(writeArticle);
+const articles = posts.map(writeArticle);
+const version = createHash("sha256").update(JSON.stringify({ sexp, articles })).digest("hex");
+fs.writeFileSync(path.join(outputRoot, "content-index.json"), JSON.stringify({
+  schemaVersion: 1, version, postsSexp: sexp, articles,
+}) + "\n");
 console.log(`Generated ${posts.length} posts in ${outputPath} and ${articlesRoot}`);

@@ -2,6 +2,7 @@
  (name main)
  (modes js)
  (libraries
+  reader_model
   async_kernel
   bonsai.web
   bonsai.web_ui_nav_link

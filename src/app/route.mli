@@ -42,6 +42,7 @@ val of_post : Post.t -> t
 val with_locale : t -> Locale.t -> t
 val index_for_area : t -> Content_area.t -> t
 val to_path : t -> string
+val of_path : string -> t Or_error.t
 val article_asset_path_for_route : t -> string option
 val post_matches_article : Post.t -> article -> bool
 val url_var : t Bonsai_web_ui_url_var.t

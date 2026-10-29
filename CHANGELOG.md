@@ -7,6 +7,15 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Added
 
+- Added a Capacitor Android reader with signed local APK/AAB builds, a custom
+  launcher icon, native sharing, article intents, and system/keyboard insets.
+- Added Bonsai search, tag filters, translated favorites, reading preferences,
+  mobile topic navigation, a generated article outline, and code copying.
+- Added first-launch offline content and atomic, verified content snapshots,
+  including compatibility with the existing posts.js publishing format.
+- Added pure OCaml expect tests, content synchronization tests, browser tests,
+  native emulator smoke tests, Android CI, and architecture documentation.
+
 - Added bilingual Jane Street video notes beginning with Why OCaml, including
   the Boolean evaluator transcription and examples of parameterized interpretation.
 

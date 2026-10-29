@@ -1,0 +1,66 @@
+name: Android reader
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "web/**"
+      - "android/**"
+      - "public/**"
+      - "scripts/**"
+      - "tests/**"
+      - "package*.json"
+      - "capacitor.config.json"
+      - "playwright.config.mjs"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.1.1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libffi-dev libssl-dev pkg-config zlib1g-dev
+          opam install . --deps-only --with-test -y
+          npm ci
+      - name: Check OCaml and content
+        run: |
+          opam exec -- dune build @fmt
+          opam exec -- dune runtest
+          npm run build:web
+          npm test
+          node --test scripts/diary.test.mjs
+      - name: Test the mobile reader
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - name: Build and lint Android
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          npx cap sync android
+          cd android
+          ./gradlew assembleDebug lintDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: young-blog-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk

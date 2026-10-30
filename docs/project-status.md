@@ -26,6 +26,10 @@ create and merge a focused PR, wait for deployment workflows, and verify the
 English, Simplified Chinese, and Traditional Chinese assets on `deploy`.
 Translation remains manual or assisted by Codex. See `diary-workflow.md`.
 
+Both publishing paths now deploy `content-index.json` beside `posts.js` and
+`articles/`. The versioned manifest includes the post index and SHA-256 hashes
+of the exact article bodies, allowing Android readers to verify content updates.
+
 The repository is connected to GitHub at:
 
 ```text

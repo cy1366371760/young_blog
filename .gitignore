@@ -3,13 +3,13 @@ _opam/
 dist/
 public/articles/
 public/posts.js
+public/content-index.json
 node_modules/
 content/inbox/diary/
 
 *.install
 public/reader.js
 public/reader.js.map
-public/content-index.json
 artifacts/
 test-results/
 playwright-report/

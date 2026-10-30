@@ -26,6 +26,8 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 - Added pure OCaml expect tests, content synchronization tests, browser tests,
   native emulator smoke tests, Android CI, and architecture documentation.
 
+- Added a versioned article manifest with exact HTML body hashes to both
+  publishing paths so the Android reader can refresh newly published content.
 - Added bilingual Jane Street video notes beginning with Why OCaml, including
   the Boolean evaluator transcription and examples of parameterized interpretation.
 

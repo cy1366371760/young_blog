@@ -5,7 +5,26 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ## Unreleased
 
+### Fixed
+
+- Preserved exact article bytes in Android content downloads, fixing SHA-256
+  failures caused by native text response newline normalization. Released the
+  reader fix as version 0.1.1 with a higher Android version code.
+- Declared the pinned OCaml formatter as a development dependency and installed
+  development dependencies in Android CI, fixing clean-runner format checks.
+- Selected Android CI SDK packages explicitly to avoid the discontinued legacy
+  `tools` package requested by the setup action's defaults.
+
 ### Added
+
+- Added a Capacitor Android reader with signed local APK/AAB builds, a custom
+  launcher icon, native sharing, article intents, and system/keyboard insets.
+- Added Bonsai search, tag filters, translated favorites, reading preferences,
+  mobile topic navigation, a generated article outline, and code copying.
+- Added first-launch offline content and atomic, verified content snapshots,
+  including compatibility with the existing posts.js publishing format.
+- Added pure OCaml expect tests, content synchronization tests, browser tests,
+  native emulator smoke tests, Android CI, and architecture documentation.
 
 - Added a versioned article manifest with exact HTML body hashes to both
   publishing paths so the Android reader can refresh newly published content.

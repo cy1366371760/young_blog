@@ -3,7 +3,7 @@ import { App } from "@capacitor/app";
 import { Share } from "@capacitor/share";
 import { Preferences } from "@capacitor/preferences";
 import DOMPurify from "dompurify";
-import { SITE_ORIGIN, legacyManifest, validateManifest, downloadSnapshot } from "./content.mjs";
+import { SITE_ORIGIN, decodeNativeText, legacyManifest, validateManifest, downloadSnapshot } from "./content.mjs";
 
 const native = Capacitor.isNativePlatform();
 const nativePreferences = new Map();
@@ -70,11 +70,12 @@ function notify(message) {
 async function remoteText(path) {
   if (native) {
     const response = await CapacitorHttp.get({
-      url: SITE_ORIGIN + path, responseType: "text", connectTimeout: 12000, readTimeout: 20000,
+      // Native text responses normalize line endings and discard the final newline.
+      url: SITE_ORIGIN + path, responseType: "arraybuffer", connectTimeout: 12000, readTimeout: 20000,
       headers: { "Cache-Control": "no-cache" },
     });
     if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
-    return typeof response.data === "string" ? response.data : JSON.stringify(response.data);
+    return decodeNativeText(response.data);
   }
   const response = await fetch(SITE_ORIGIN + path, { cache: "no-store", signal: AbortSignal.timeout(20000) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);

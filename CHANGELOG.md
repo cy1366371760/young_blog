@@ -7,6 +7,9 @@ This project follows a lightweight version of Keep a Changelog. Dates use
 
 ### Fixed
 
+- Preserved exact article bytes in Android content downloads, fixing SHA-256
+  failures caused by native text response newline normalization. Released the
+  reader fix as version 0.1.1 with a higher Android version code.
 - Declared the pinned OCaml formatter as a development dependency and installed
   development dependencies in Android CI, fixing clean-runner format checks.
 - Selected Android CI SDK packages explicitly to avoid the discontinued legacy

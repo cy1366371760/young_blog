@@ -1,5 +1,13 @@
 export const SITE_ORIGIN = "https://young-blog.pages.dev";
 
+export function decodeNativeText(data) {
+  // Capacitor parses JSON responses even when arraybuffer is requested.
+  if (data !== null && typeof data === "object") return JSON.stringify(data);
+  if (typeof data !== "string") throw new Error("Invalid native HTTP response");
+  const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
+
 export async function sha256(text) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, "0")).join("");

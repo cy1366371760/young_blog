@@ -56,7 +56,24 @@ try {
   steps.push("Native Android share sheet opens with the public article URL");
   await page.getByRole("button", { name: "Refresh library", exact: true }).click();
   await expect(page.getByRole("status")).toContainText(/Library updated|up to date/, { timeout: 90000 });
-  steps.push("Real production content refresh succeeds through the native HTTP bridge");
+  const verifiedBodies = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("young-blog-reader", 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const snapshot = await new Promise((resolve, reject) => {
+        const request = db.transaction("content").objectStore("content").get("active");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      return snapshot.manifest.articles.every((article) => /^[a-f0-9]{64}$/.test(article.sha256))
+        && Object.keys(snapshot.articles).length === snapshot.manifest.articles.length;
+    } finally { db.close(); }
+  });
+  expect(verifiedBodies).toBe(true);
+  steps.push("Real production hashed content refresh succeeds through the native HTTP bridge");
   const articlePath = "/tech/zh-hant/ocaml-learning/jane-street-video-notes/jane-street-why-ocaml";
   run("shell", "am", "start", "-W", "-a", "android.intent.action.VIEW", "-d", `https://young-blog.pages.dev${articlePath}`, pkg);
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-Hant");

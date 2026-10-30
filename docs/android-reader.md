@@ -1,6 +1,6 @@
 # Android Reader
 
-Young Blog 0.1.0 keeps its OCaml/Bonsai frontend and packages the release web
+Young Blog 0.1.1 keeps its OCaml/Bonsai frontend and packages the release web
 assets in Capacitor. It supports Android 7.0 (API 24) and later.
 
 ## Build
@@ -53,6 +53,9 @@ uninstall the debug build first, which also removes its local reader data.
   switches catalogs only after all articles have downloaded successfully.
 - New servers expose `content-index.json`. Existing deployments with only
   `posts.js` are also supported, with data parsing instead of script execution.
+- Android downloads article bodies as binary data before UTF-8 decoding, keeping
+  trailing newlines and line endings intact for SHA-256 verification. Version
+  0.1.1 fixes refresh failures against hashed manifests in version 0.1.0.
 - Remote article HTML is sanitized. No remote application code is downloaded.
 - Article sharing opens the Android share sheet. External article links are
   registered with the Android activity. Until domain verification is configured,

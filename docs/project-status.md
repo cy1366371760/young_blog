@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-10-29.
+Last updated: 2026-10-30.
 
 ## Current State
 
@@ -98,6 +98,8 @@ sharing, incoming article intents, and keyboard/system-bar insets.
 
 Content refresh uses a generated hashed manifest and atomically persists a full
 article snapshot. Existing servers that expose only `posts.js` remain compatible.
+Android reader 0.1.1 downloads binary responses and decodes UTF-8 without the
+native text bridge's newline normalization, preserving body hashes during refresh.
 Local builds produce signed release APK/AAB files and a debug APK; keys stay
 outside Git. See `android-reader.md` and ADR 0004. Automatic verified App Links
 require a deployed domain association for the distribution certificate.

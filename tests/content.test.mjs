@@ -1,9 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
-import { validateManifest, legacyManifest, articlePaths, downloadSnapshot, sha256 } from "../web/content.mjs";
+import { validateManifest, legacyManifest, articlePaths, downloadSnapshot, sha256, decodeNativeText } from "../web/content.mjs";
 
 const manifest = JSON.parse(await fs.readFile("public/content-index.json", "utf8"));
+
+test("native binary responses preserve Unicode, line endings, and body hashes", async () => {
+  const html = "<p>中文與 emoji 🌙</p>\r\n<pre>let x = 1</pre>\n";
+  const encoded = Buffer.from(html).toString("base64");
+  assert.equal(decodeNativeText(encoded), html);
+  const snapshot = await downloadSnapshot(manifest, async (path) => {
+    const bytes = await fs.readFile("public" + path);
+    return decodeNativeText(bytes.toString("base64"));
+  }, (s) => s);
+  assert.equal(Object.keys(snapshot.articles).length, manifest.articles.length);
+  assert.deepEqual(JSON.parse(decodeNativeText(manifest)), manifest);
+  assert.throws(() => decodeNativeText(null), /Invalid native HTTP response/);
+  assert.throws(() => decodeNativeText(Buffer.from([0xff]).toString("base64")));
+});
 
 test("the generated index pairs every article with the exact emitted body", async () => {
   validateManifest(manifest);

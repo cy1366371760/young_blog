@@ -8,3 +8,8 @@ node_modules/
 content/inbox/diary/
 
 *.install
+public/reader.js
+public/reader.js.map
+artifacts/
+test-results/
+playwright-report/

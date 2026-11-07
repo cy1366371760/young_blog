@@ -8,4 +8,6 @@ val page
   -> navigation_posts:Post.t list
   -> all_posts:Post.t list
   -> article:Article_loader.t
+  -> controls:Reader_controls.t
+  -> inject:(Reader_controls.action -> unit Effect.t)
   -> Vdom.Node.t

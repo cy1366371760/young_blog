@@ -66,7 +66,18 @@ let posts_in_subcategory posts category subcategory =
     String.equal post.category category && String.equal post.subcategory subcategory)
 ;;
 
-let post_card ~set_route (post : Post.t) =
+let action_button ?(active = false) ~label ~on_click () =
+  Node.button
+    ~attrs:
+      [ Attr.class_ (if active then "reader-button is-active" else "reader-button")
+      ; Attr.type_ "button"
+      ; Attr.on_click (fun _ -> on_click)
+      ; Attr.create "aria-pressed" (Bool.to_string active)
+      ]
+    [ text label ]
+;;
+
+let post_card ~set_route ~controls ~inject (post : Post.t) =
   Node.create
     "article"
     ~attrs:[ Attr.class_ "post-card" ]
@@ -77,7 +88,18 @@ let post_card ~set_route (post : Post.t) =
         post.title
     ; Node.div ~attrs:[ Attr.class_ "post-meta" ] [ text (Date.to_string post.date) ]
     ; Node.p ~attrs:[ Attr.class_ "post-summary" ] [ text post.summary ]
-    ; Node.div ~attrs:[ Attr.class_ "post-tags" ] (List.map post.tags ~f:tag_chip)
+    ; Node.div
+        ~attrs:[ Attr.class_ "card-footer" ]
+        [ Node.div ~attrs:[ Attr.class_ "post-tags" ] (List.map post.tags ~f:tag_chip)
+        ; action_button
+            ~active:(Reader_controls.is_saved controls post)
+            ~label:
+              (let copy = Reader_copy.for_locale post.locale in
+               if Reader_controls.is_saved controls post then copy.saved else copy.save)
+            ~on_click:
+              (inject (Reader_controls.Toggle_saved (Reader_controls.saved_key post)))
+            ()
+        ]
     ]
 ;;
 
@@ -245,57 +267,229 @@ let article_list_header ~(context : Route.context) route note_count =
     ]
 ;;
 
-let article_list_page ~set_route ~(context : Route.context) ~route ~posts =
-  Node.section
-    ~attrs:[ Attr.class_ "main-copy" ]
-    [ article_list_header ~context route (List.length posts)
+let filter_toolbar ~locale ~(controls : Reader_controls.t) ~inject ~posts =
+  let copy = Reader_copy.for_locale locale in
+  let tags =
+    List.concat_map posts ~f:(fun (post : Post.t) -> post.tags) |> unique_sorted
+  in
+  Node.div
+    ~attrs:[ Attr.class_ "filter-toolbar" ]
+    [ Node.div
+        ~attrs:[ Attr.class_ "search-field" ]
+        [ Node.label ~attrs:[ Attr.for_ "article-search" ] [ text copy.search ]
+        ; Node.input
+            ~attrs:
+              [ Attr.id "article-search"
+              ; Attr.type_ "search"
+              ; Attr.placeholder copy.search_hint
+              ; Attr.value_prop controls.query
+              ; Attr.create "autocomplete" "off"
+              ; Attr.on_input (fun _ value -> inject (Reader_controls.Query value))
+              ]
+            ()
+        ]
     ; Node.div
-        ~attrs:[ Attr.class_ "article-list" ]
-        (List.map posts ~f:(post_card ~set_route))
+        ~attrs:[ Attr.class_ "library-tabs" ]
+        [ action_button
+            ~active:(not controls.saved_only)
+            ~label:copy.all
+            ~on_click:(inject (Reader_controls.Saved_only false))
+            ()
+        ; action_button
+            ~active:controls.saved_only
+            ~label:copy.only_saved
+            ~on_click:(inject (Reader_controls.Saved_only true))
+            ()
+        ; action_button
+            ~label:copy.clear
+            ~on_click:(inject Reader_controls.Clear_filters)
+            ()
+        ]
+    ; Node.div
+        ~attrs:[ Attr.class_ "filter-tags"; Attr.create "aria-label" "Tags" ]
+        (List.map tags ~f:(fun tag ->
+           action_button
+             ~active:(Option.equal String.equal controls.tag (Some tag))
+             ~label:tag
+             ~on_click:
+               (inject
+                  (Reader_controls.Tag
+                     (if Option.equal String.equal controls.tag (Some tag)
+                      then None
+                      else Some tag)))
+             ()))
     ]
 ;;
 
-let page ~route ~set_route ~posts ~navigation_posts ~all_posts ~article =
+let article_list_page
+      ~set_route
+      ~(context : Route.context)
+      ~route
+      ~posts
+      ~navigation_posts
+      ~controls
+      ~inject
+  =
+  Node.section
+    ~attrs:[ Attr.class_ "main-copy" ]
+    [ article_list_header ~context route (List.length posts)
+    ; filter_toolbar ~locale:context.locale ~controls ~inject ~posts:navigation_posts
+    ; (if List.is_empty posts
+       then (
+         let copy = Reader_copy.for_locale context.locale in
+         Node.div
+           ~attrs:[ Attr.class_ "empty-library" ]
+           [ Node.h2 [ text copy.empty ]; Node.p [ text copy.empty_hint ] ])
+       else
+         Node.div
+           ~attrs:[ Attr.class_ "article-list" ]
+           (List.map posts ~f:(post_card ~set_route ~controls ~inject)))
+    ]
+;;
+
+let reading_settings ~locale ~(controls : Reader_controls.t) ~inject =
+  let copy = Reader_copy.for_locale locale in
+  Node.create
+    "details"
+    ~attrs:[ Attr.class_ "reader-settings" ]
+    [ Node.create
+        "summary"
+        ~attrs:[ Attr.create "aria-label" copy.settings ]
+        [ text "Aa" ]
+    ; Node.div
+        ~attrs:[ Attr.class_ "settings-panel" ]
+        [ Node.h2 [ text copy.settings ]
+        ; Node.div
+            ~attrs:[ Attr.class_ "font-controls" ]
+            [ action_button
+                ~label:"A−"
+                ~on_click:(inject (Reader_controls.Font (controls.font_size - 1)))
+                ()
+            ; Node.span [ text (copy.font ^ " · " ^ Int.to_string controls.font_size) ]
+            ; action_button
+                ~label:"A+"
+                ~on_click:(inject (Reader_controls.Font (controls.font_size + 1)))
+                ()
+            ]
+        ; Node.div
+            ~attrs:[ Attr.class_ "theme-controls" ]
+            (List.map
+               [ "system", copy.system; "light", copy.light; "dark", copy.dark ]
+               ~f:(fun (theme, label) ->
+                 action_button
+                   ~active:(String.equal controls.theme theme)
+                   ~label
+                   ~on_click:(inject (Reader_controls.Theme theme))
+                   ()))
+        ; Node.p [ text copy.local ]
+        ]
+    ]
+;;
+
+let page ~route ~set_route ~posts ~navigation_posts ~all_posts ~article ~controls ~inject =
   let context = Route.context route in
-  let article_exists =
+  let copy = Reader_copy.for_locale context.locale in
+  let post =
     match route with
-    | Route.Article article_route ->
-      List.exists posts ~f:(fun post -> Route.post_matches_article post article_route)
-    | Index _ | Category _ | Subcategory _ -> true
+    | Route.Article article ->
+      List.find all_posts ~f:(fun post -> Route.post_matches_article post article)
+    | Index _ | Category _ | Subcategory _ -> None
   in
+  let navigation () = category_navigation ~route ~set_route ~posts:navigation_posts in
   Node.div
     ~attrs:[ Attr.class_ "app-shell" ]
     [ Node.header
-        ~attrs:[ Attr.class_ "topbar" ]
+        ~attrs:[ Attr.class_ "site-header" ]
+        [ Node.div
+            ~attrs:[ Attr.class_ "brand-row" ]
+            [ nav_link
+                ~classes:(Attr.class_ "brand")
+                ~set_route
+                (Route.Index context)
+                "y / Young Blog"
+            ; Node.div
+                ~attrs:[ Attr.class_ "header-actions" ]
+                [ action_button ~label:copy.refresh ~on_click:Reader_platform.sync ()
+                ; reading_settings ~locale:context.locale ~controls ~inject
+                ]
+            ]
+        ; Node.div
+            ~attrs:[ Attr.class_ "topbar" ]
+            [ Node.create
+                "nav"
+                ~attrs:[ Attr.class_ "section-tabs"; Attr.create "aria-label" "Sections" ]
+                (List.map Content_area.all ~f:(area_button ~route ~set_route))
+            ; Node.create
+                "nav"
+                ~attrs:[ Attr.class_ "locale-tabs"; Attr.create "aria-label" "Language" ]
+                (List.map
+                   Locale.all
+                   ~f:(locale_button ~route ~set_route ~posts:all_posts))
+            ]
+        ]
+    ; Node.div
+        ~attrs:[ Attr.class_ "mobile-topics-wrap" ]
         [ Node.create
-            "nav"
-            ~attrs:[ Attr.class_ "section-tabs" ]
-            (List.map Content_area.all ~f:(area_button ~route ~set_route))
-        ; Node.create
-            "nav"
-            ~attrs:[ Attr.class_ "locale-tabs" ]
-            (List.map Locale.all ~f:(locale_button ~route ~set_route ~posts:all_posts))
+            "details"
+            ~attrs:[ Attr.class_ "mobile-categories" ]
+            [ Node.create "summary" [ text copy.categories ]; navigation () ]
         ]
     ; Node.main
         ~attrs:[ Attr.class_ "page-grid" ]
         [ (match route with
            | Route.Index _ | Category _ | Subcategory _ ->
-             article_list_page ~set_route ~context ~route ~posts
+             article_list_page
+               ~set_route
+               ~context
+               ~route
+               ~posts
+               ~navigation_posts
+               ~controls
+               ~inject
            | Route.Article article_route ->
-             let post =
-               List.find posts ~f:(fun post ->
-                 Route.post_matches_article post article_route)
-             in
              Node.create
                "article"
-               ~attrs:[ Attr.class_ "article-page" ]
+               ~attrs:
+                 [ Attr.class_ "article-page"
+                 ; Attr.create "data-article-path" (Route.to_path route)
+                 ]
                [ article_header ~set_route article_route post
-               ; article_body ~locale:context.locale ~article_exists article
                ; Node.div
-                   ~attrs:[ Attr.class_ "comments-slot" ]
-                   [ text (Copy.for_locale context.locale).comments_boundary ]
+                   ~attrs:[ Attr.class_ "article-actions" ]
+                   [ (match post with
+                      | None -> Node.none
+                      | Some post ->
+                        action_button
+                          ~active:(Reader_controls.is_saved controls post)
+                          ~label:
+                            (if Reader_controls.is_saved controls post
+                             then copy.saved
+                             else copy.save)
+                          ~on_click:
+                            (inject
+                               (Reader_controls.Toggle_saved
+                                  (Reader_controls.saved_key post)))
+                          ())
+                   ; action_button
+                       ~label:copy.share
+                       ~on_click:
+                         (Reader_platform.share
+                            ~path:(Route.to_path route)
+                            ~title:
+                              (Option.value_map post ~default:"Young Blog" ~f:(fun p ->
+                                 p.Post.title)))
+                       ()
+                   ]
+               ; article_body
+                   ~locale:context.locale
+                   ~article_exists:(Option.is_some post)
+                   article
+               ; Node.div ~attrs:[ Attr.class_ "reading-end" ] [ text copy.reading ]
                ])
-        ; category_navigation ~route ~set_route ~posts:navigation_posts
+        ; Node.div ~attrs:[ Attr.class_ "desktop-topics" ] [ navigation () ]
         ]
+    ; Node.footer
+        ~attrs:[ Attr.class_ "site-footer" ]
+        [ Node.span [ text "Young Blog" ]; Node.span [ text copy.offline ] ]
     ]
 ;;

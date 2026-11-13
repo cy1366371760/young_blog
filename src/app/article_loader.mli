@@ -8,4 +8,8 @@ type t =
   | Failed of string
 [@@deriving equal, sexp]
 
-val component : string option Bonsai.t -> Bonsai.graph -> t Bonsai.t
+val component
+  :  string option Bonsai.t
+  -> revision:int Bonsai.t
+  -> Bonsai.graph
+  -> t Bonsai.t

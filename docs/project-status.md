@@ -17,7 +17,7 @@ The `ocaml-learning/jane-street-video-notes` section now starts a bilingual
 series on older Jane Street talks with Why OCaml, its Boolean evaluator, and
 reflections on type polymorphism and configurable interpretation rules. The
 article now connects the evaluator to a standalone blog-filtering example;
-application search and filtering remain unimplemented.
+the application now implements title/summary/tag search and tag filtering.
 
 The Essays / Notes / Daily section now includes a Chinese-first personal diary.
 The diary helper keeps unfinished translations outside published content, then
@@ -86,13 +86,35 @@ static-only and should contain only browser assets such as `index.html`,
 - OCaml in AtCoder content framework, starter note, and seven beginner-problem
   write-ups with OCaml implementations.
 
+## Android Reader
+
+The Android CI workflow installs the project's development dependencies,
+including the formatter version pinned in `.ocamlformat`, so clean runners can
+run the same formatting checks as local development.
+Android setup explicitly selects platform tools, SDK 36, and build tools 36.0.0
+instead of relying on the setup action's legacy package defaults.
+
+The repository now includes a Capacitor 8 Android reader retaining Bonsai v0.17.
+It bundles all three language variants for first-launch offline use and provides
+search, tag filters, translated favorites, reading preferences, position restore,
+code copying, and mobile topic navigation. Platform integration adds native
+sharing, incoming article intents, and keyboard/system-bar insets.
+
+Content refresh uses a generated hashed manifest and atomically persists a full
+article snapshot. Existing servers that expose only `posts.js` remain compatible.
+Android reader 0.1.1 downloads binary responses and decodes UTF-8 without the
+native text bridge's newline normalization, preserving body hashes during refresh.
+Local builds produce signed release APK/AAB files and a debug APK; keys stay
+outside Git. See `android-reader.md` and ADR 0004. Automatic verified App Links
+require a deployed domain association for the distribution certificate.
+
 ## Next Steps
 
 1. Configure Cloudflare Pages to serve the `deploy` branch and honor `_redirects`.
 2. Review the initial article translations for tone and terminology.
-3. Add Bonsai state for query and tag filters.
+3. Validate the Android reader on physical devices and configure verified App Links.
 4. Add optional instrumentation for inspecting real Incremental recomputation.
-5. Add a small smoke test script for generated assets.
+5. Expand performance measurements as the article library grows.
 
 ## Known Risks
 

@@ -73,6 +73,9 @@ opam exec -- dune build @fmt
 opam exec -- scripts/build_site.sh
 node scripts/generate_posts.mjs public/posts.js
 scripts/check_content.sh
+npm test
+npm run test:browser
+npm run build:android
 ```
 
 For a local static smoke test:
@@ -116,11 +119,23 @@ Cloudflare Pages should point at the `deploy` branch with:
 
 ## Known Gaps
 
-- Search and tag filters are UI placeholders.
+- Search and exact tag filters run through Bonsai-derived values. Favorites
+  and reading preferences persist through the platform adapter.
 - The Incremental trace panel is still illustrative, not wired to real
   computation events.
 - The JavaScript bundle is large because this is an early js_of_ocaml/Bonsai
   build with no size optimization pass yet.
+
+## Android Reader
+
+- `android/` is the Capacitor native project; `dist/` supplies its local assets.
+- `src/reader_core/` contains pure search and request-state logic with expect tests.
+- `Reader_platform` is the typed OCaml boundary for `web/reader.js`.
+- Generated `content-index.json` includes body hashes. Content publishing must
+  deploy it alongside `posts.js` and `articles/`.
+- Release signing keys live outside the repository. Never commit keys, passwords,
+  generated APK/AAB files, or copied Android web assets.
+- See `docs/android-reader.md` and ADR 0004 before changing platform boundaries.
 
 ## Before Opening A PR
 

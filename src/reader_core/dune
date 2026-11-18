@@ -1,0 +1,6 @@
+(library
+ (name reader_model)
+ (libraries core)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))

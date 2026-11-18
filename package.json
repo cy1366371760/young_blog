@@ -3,6 +3,28 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.3",
+    "dompurify": "3.4.17",
     "opencc-js": "1.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "@playwright/test": "1.64.1",
+    "esbuild": "0.28.2"
+  },
+  "scripts": {
+    "build:web": "opam exec -- scripts/build_site.sh",
+    "build:reader": "node scripts/build_reader.mjs",
+    "build:android": "scripts/build_android.sh",
+    "test": "node --test tests/content.test.mjs",
+    "test:browser": "playwright test",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "test:android": "node tests/android/smoke.mjs",
+    "preview": "node scripts/serve_site.mjs"
   }
 }

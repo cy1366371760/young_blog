@@ -139,6 +139,11 @@ let parse_exn components =
 
 let unparse route = Bonsai_web_ui_url_var.Components.create ~path:(to_path route) ()
 
+let of_path path =
+  Or_error.try_with (fun () ->
+    parse_exn (Bonsai_web_ui_url_var.Components.create ~path ()))
+;;
+
 let url_var =
   Bonsai_web_ui_url_var.create_exn
     (module struct

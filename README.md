@@ -3,6 +3,11 @@
 A bilingual personal blog built with OCaml, Bonsai, and a static publishing
 pipeline.
 
+The same Bonsai reader is available as an Android application. Run
+`npm run build:android` to generate a signed installable APK and AAB. See
+[`docs/android-reader.md`](docs/android-reader.md) for environment setup,
+offline behavior, signing, and tests.
+
 Content type and language are independent. Source files use:
 
 ```text
